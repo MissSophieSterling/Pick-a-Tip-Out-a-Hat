@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Tip Hat</title>
+  <meta name="description" content="Pick your Dasher's tip out of a hat. A bright little game of chance.">
+  <meta name="theme-color" content="#ff2d95">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tip Hat">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="bg-rainbow" aria-hidden="true"></div>
+  <div class="sparkles" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <button id="btn-home" class="icon-btn" type="button" aria-label="Home" title="Home" hidden>🏠</button>
+    <div class="spacer"></div>
+    <button id="btn-menu" class="icon-btn" type="button" aria-label="Open settings" aria-controls="drawer" aria-expanded="false">
+      <span class="burger"><i></i><i></i><i></i></span>
+    </button>
+  </header>
+
+  <main id="app">
+
+    <!-- HOME -->
+    <section id="screen-home" class="screen active">
+      <h1 class="title">
+        <span class="title-line">Pick a Tip</span>
+        <span class="title-line">Out of a Hat</span>
+      </h1>
+      <p class="tagline">Delivered per instructions? Then it's game time! 🎉</p>
+
+      <div class="home-preview">
+        <svg id="preview-svg" viewBox="0 0 400 420" preserveAspectRatio="xMidYMid meet" aria-label="A hand hovering over a ball cap">
+          <g id="preview-hat"></g>
+          <g id="preview-hand"></g>
+        </svg>
+      </div>
+
+      <div class="mode-buttons">
+        <button id="btn-mode-value" class="big-btn btn-pink" type="button">
+          <span class="big-btn-emoji">🎩</span>
+          <span class="big-btn-text">Draw a Tip<small>Pull a slip. The amount on it is the tip.</small></span>
+        </button>
+        <button id="btn-mode-number" class="big-btn btn-blue" type="button">
+          <span class="big-btn-emoji">🔢</span>
+          <span class="big-btn-text">Pick a Number<small>Choose a number. Its card hides the tip.</small></span>
+        </button>
+      </div>
+      <p class="slip-summary" id="slip-summary"></p>
+    </section>
+
+    <!-- PICK A NUMBER -->
+    <section id="screen-pick" class="screen">
+      <h2 class="screen-title pulse-text">PICK A NUMBER</h2>
+      <p class="hint">Every number hides a tip. Which one feels lucky?</p>
+      <div id="number-grid" class="number-grid"></div>
+      <div class="pick-actions">
+        <div class="picked-display" id="picked-display">?</div>
+        <button id="btn-lock" class="big-btn btn-yellow" type="button" disabled>
+          <span class="big-btn-emoji">🔒</span><span class="big-btn-text">Lock it in!</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- STAGE -->
+    <section id="screen-stage" class="screen">
+      <div class="banner" id="banner"><span id="banner-text">Get ready…</span><span id="banner-sub"></span></div>
+      <div class="stage-wrap" id="stage-wrap">
+        <svg id="stage" viewBox="0 0 400 640" preserveAspectRatio="xMidYMid meet" aria-label="Game stage">
+          <defs>
+            <linearGradient id="tableGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0.05"/>
+            </linearGradient>
+            <radialGradient id="spot" cx="50%" cy="40%" r="60%">
+              <stop offset="0" stop-color="#fff" stop-opacity="0.45"/>
+              <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect id="stage-spot" x="0" y="0" width="400" height="640" fill="url(#spot)"/>
+          <ellipse id="table" cx="200" cy="560" rx="190" ry="60" fill="url(#tableGrad)"/>
+          <g id="layer-desk"></g>
+          <g id="hat-group" transform="translate(200,430)">
+            <g id="hat-back"></g>
+            <g id="hand-slot-inside"></g>
+            <g id="hat-front"></g>
+            <g id="hand-slot-front"></g>
+          </g>
+          <g id="layer-flying"></g>
+          <g id="layer-hand"></g>
+          <g id="layer-clock" opacity="0"></g>
+        </svg>
+        <div id="vignette" class="vignette"></div>
+      </div>
+      <button id="btn-abort" class="text-btn" type="button">✕ cancel</button>
+    </section>
+
+  </main>
+
+  <!-- RESULT OVERLAY -->
+  <div id="result" class="result" hidden>
+    <canvas id="celebration"></canvas>
+    <div class="flash" id="flash"></div>
+    <div class="result-inner">
+      <div class="result-card" id="result-card">
+        <div class="result-kicker" id="result-kicker">WE GOT A WINNER!</div>
+        <div class="result-amount" id="result-amount">$25</div>
+        <div class="result-sub" id="result-sub">That's the tip. Thank you, Dasher! 🙌</div>
+      </div>
+      <div class="result-actions">
+        <button id="btn-again" class="big-btn btn-yellow" type="button" hidden>
+          <span class="big-btn-emoji">🔁</span><span class="big-btn-text" id="btn-again-text">Draw again</span>
+        </button>
+        <button id="btn-replay" class="big-btn btn-pink" type="button">
+          <span class="big-btn-emoji">🎉</span><span class="big-btn-text">Play again</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS DRAWER -->
+  <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+  <aside id="drawer" class="drawer" aria-label="Settings" aria-hidden="true">
+    <div class="drawer-head">
+      <h2>Settings</h2>
+      <button id="btn-close-drawer" class="icon-btn" type="button" aria-label="Close settings">✕</button>
+    </div>
+    <div class="drawer-body">
+
+      <section class="set">
+        <h3>Appearance</h3>
+        <div class="row">
+          <label>Theme</label>
+          <div class="seg" role="group" aria-label="Theme">
+            <button type="button" class="seg-btn" data-theme-choice="light">☀️ Light</button>
+            <button type="button" class="seg-btn" data-theme-choice="dark">🌙 Dark</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="set">
+        <h3>The Hand</h3>
+        <div class="row">
+          <label for="set-skin-toggle">Set skin tone</label>
+          <label class="switch"><input type="checkbox" id="set-skin-toggle"><span></span></label>
+        </div>
+        <p class="help" id="skin-help">Off = a new random hand every session.</p>
+        <div class="swatches" id="skin-swatches" hidden></div>
+        <div class="row">
+          <label>Accessories</label>
+          <button id="btn-reroll-hand" class="small-btn" type="button">🎲 New random hand</button>
+        </div>
+        <div class="hand-mini">
+          <svg id="mini-svg" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid meet"><g id="mini-hand"></g></svg>
+        </div>
+      </section>
+
+      <section class="set">
+        <h3>The Hat</h3>
+        <div class="row">
+          <label for="set-hat">Hat color</label>
+          <select id="set-hat"></select>
+        </div>
+      </section>
+
+      <section class="set">
+        <h3>Tip Amounts</h3>
+        <p class="help">Tap an amount to remove it. These go in the hat.</p>
+        <div class="chips" id="amount-chips"></div>
+        <div class="add-row">
+          <span class="dollar">$</span>
+          <input id="amount-input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Add amount">
+          <button id="btn-add-amount" class="small-btn" type="button">Add</button>
+        </div>
+        <div class="row">
+          <label for="set-again">Choose Again slips</label>
+          <input id="set-again" class="num" type="number" inputmode="numeric" min="0" max="50">
+        </div>
+        <div class="row">
+          <label for="set-wild">Wild Card slips</label>
+          <input id="set-wild" class="num" type="number" inputmode="numeric" min="0" max="50">
+        </div>
+        <button id="btn-reset-amounts" class="small-btn" type="button">Reset to defaults</button>
+      </section>
+
+      <section class="set">
+        <h3>Celebration</h3>
+        <div class="row">
+          <label for="set-bg">Winner background</label>
+          <select id="set-bg">
+            <option value="random">🎲 Random (default)</option>
+            <option value="crowd">🏟️ Crowd goes wild</option>
+            <option value="confetti">🎊 Confetti</option>
+            <option value="stars">✨ Stars</option>
+            <option value="fireworks">🎆 Fireworks</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="set-sound">Sound</label>
+          <label class="switch"><input type="checkbox" id="set-sound"><span></span></label>
+        </div>
+      </section>
+
+      <p class="version">Tip Hat · settings are saved on this device</p>
+    </div>
+  </aside>
+
+  <script src="js/util.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/hand.js"></script>
+  <script src="js/hat.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/celebrate.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
