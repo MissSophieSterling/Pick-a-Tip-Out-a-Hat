@@ -233,12 +233,49 @@
     const held = svg('g', { class: 'held' });
     root.appendChild(held);
 
-    // ---- fingers ----
-    const fingerBends = [];
+    // The hand is drawn in three passes so it reads as one smooth shape with a single outline:
+    // 1) every part in a fat outline-coloured stroke, 2) every part filled with the skin colour,
+    // 3) only the lines that belong on the back of a hand: the gaps between the fingers and the
+    //    thumb's outer edge, clipped so no line crosses the knuckles. Details go on top of that.
+    const fingerClip = `${id}-fclip`, thumbClip = `${id}-tclip`;
+    const fc = svg('clipPath', { id: fingerClip });
+    fc.appendChild(svg('rect', { x: -30, y: 0, width: 60, height: 240 }));
+    defs.appendChild(fc);
+    const tc = svg('clipPath', { id: thumbClip });
+    tc.appendChild(svg('rect', { x: -30, y: 24, width: 60, height: 240 }));
+    defs.appendChild(tc);
+
+    const fingerShape = (f) => svg('rect', { x: -10.5, y: -14, width: 21, height: f.len + 14, rx: 10.5 });
+    const thumbShape = () => svg('rect', { x: -11.5, y: -40, width: 23, height: THUMB.len + 40, rx: 11.5 });
+    const bodyD = 'M-41,-300 L-36,-6 C-50,30 -56,74 -43.5,95 L43.5,95 C56,74 50,30 36,-6 L41,-300 Z';
+    const fingerGroups = FINGERS.map(() => []); // per finger: the scaled group of each pass
+    const thumbGroups = [];
+    const passStyle = [
+      { fill: outline, stroke: outline, 'stroke-width': 5, 'stroke-linejoin': 'round' },
+      { fill: skin },
+    ];
+    const style = (el, st) => { for (const k in st) el.setAttribute(k, st[k]); return el; };
+    for (let pass = 0; pass < 2; pass++) {
+      FINGERS.forEach((f, i) => {
+        const fg = svg('g', { transform: `translate(${f.x},95)` });
+        const bend = svg('g');
+        bend.appendChild(style(fingerShape(f), passStyle[pass]));
+        fg.appendChild(bend);
+        root.appendChild(fg);
+        fingerGroups[i].push(bend);
+      });
+      const tg = svg('g');
+      tg.appendChild(style(thumbShape(), passStyle[pass]));
+      root.appendChild(tg);
+      thumbGroups.push(tg);
+      root.appendChild(style(svg('path', { d: bodyD }), passStyle[pass]));
+    }
+
+    // pass 3: finger gaps, nails, rings, knuckle letters
     FINGERS.forEach((f, i) => {
       const fg = svg('g', { transform: `translate(${f.x},95)` });
       const bend = svg('g');
-      bend.appendChild(svg('rect', { x: -10.5, y: -14, width: 21, height: f.len + 14, rx: 10.5, fill: skin, stroke: outline, 'stroke-width': 2.5 }));
+      bend.appendChild(style(fingerShape(f), { fill: 'none', stroke: outline, 'stroke-width': 2.5, 'clip-path': `url(#${fingerClip})` }));
       // nail
       bend.appendChild(svg('ellipse', { cx: 0, cy: f.len - 8, rx: 6.5, ry: 8, fill: nailFill, stroke: nailStroke, 'stroke-width': 1.2 }));
       bend.appendChild(svg('ellipse', { cx: -2, cy: f.len - 11, rx: 1.8, ry: 2.6, fill: '#fff', opacity: 0.55 }));
@@ -259,12 +296,12 @@
       });
       fg.appendChild(bend);
       root.appendChild(fg);
-      fingerBends.push(bend);
+      fingerGroups[i].push(bend);
     });
 
-    // ---- thumb ----
-    const thumbG = svg('g', { transform: `translate(${THUMB.x},${THUMB.y}) rotate(-40)` });
-    thumbG.appendChild(svg('rect', { x: -11.5, y: -40, width: 23, height: THUMB.len + 40, rx: 11.5, fill: skin, stroke: outline, 'stroke-width': 2.5 }));
+    // thumb edge, nail and rings
+    const thumbG = svg('g');
+    thumbG.appendChild(style(thumbShape(), { fill: 'none', stroke: outline, 'stroke-width': 2.5, 'clip-path': `url(#${thumbClip})` }));
     thumbG.appendChild(svg('ellipse', { cx: 0, cy: THUMB.len - 9, rx: 7, ry: 8.5, fill: nailFill, stroke: nailStroke, 'stroke-width': 1.2 }));
     thumbG.appendChild(svg('ellipse', { cx: -2, cy: THUMB.len - 12, rx: 1.8, ry: 2.6, fill: '#fff', opacity: 0.55 }));
     look.rings.filter((r) => r.finger === 4).forEach((r) => {
@@ -273,14 +310,8 @@
       if (r.gem) thumbG.appendChild(svg('circle', { cx: 0, cy: y + 4, r: 4.4, fill: r.gem, stroke: METALS[r.metal].c, 'stroke-width': 1 }));
     });
     root.appendChild(thumbG);
+    thumbGroups.push(thumbG);
 
-    // ---- silhouette: forearm + back of hand ----
-    // one smooth shape in one flat colour: no creases, knuckle lines or highlights
-    const body = svg('path', {
-      d: 'M-41,-300 L-36,-6 C-50,30 -54,66 -47,96 Q0,106 47,96 C54,66 50,30 36,-6 L41,-300 Z',
-      fill: skin, stroke: outline, 'stroke-width': 2.5, 'stroke-linejoin': 'round',
-    });
-    root.appendChild(body);
     if (look.freckles) for (let k = 0; k < 9; k++) root.appendChild(svg('circle', { cx: rand(-30, 30), cy: rand(20, 80), r: rand(0.8, 1.6), fill: shade(skin, -0.3), opacity: 0.6 }));
 
     // ---- tattoo ----
@@ -372,11 +403,13 @@
         Object.assign(this.pose, p);
         const P = this.pose;
         group.setAttribute('transform', `translate(${P.x.toFixed(2)},${P.y.toFixed(2)}) rotate(${P.rot.toFixed(2)}) scale(${P.scale})`);
-        fingerBends.forEach((b, i) => {
+        fingerGroups.forEach((groups, i) => {
           const c = U.clamp(P.curl[i], 0, 1);
-          b.setAttribute('transform', `scale(1,${(1 - 0.6 * c).toFixed(3)})`);
+          const t = `scale(1,${(1 - 0.6 * c).toFixed(3)})`;
+          groups.forEach((g) => g.setAttribute('transform', t));
         });
-        thumbG.setAttribute('transform', `translate(${THUMB.x},${THUMB.y}) rotate(${P.thumb.toFixed(2)})`);
+        const tt = `translate(${THUMB.x},${THUMB.y}) rotate(${P.thumb.toFixed(2)})`;
+        thumbGroups.forEach((g) => g.setAttribute('transform', tt));
       },
       /** Tween to a new pose. Fields not given are kept. */
       moveTo(target, dur, easing) {

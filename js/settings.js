@@ -20,8 +20,8 @@
   ];
 
   const HAT_COLORS = [
-    { id: 'ember', name: 'Ember', hex: '#FF4514' },
     { id: 'red', name: 'Red (classic)', hex: '#e0222e' },
+    { id: 'ember', name: 'Ember', hex: '#FF4514' },
     { id: 'rust', name: 'Rust', hex: '#8A3C20' },
     { id: 'mocha', name: 'Mocha', hex: '#895946' },
     { id: 'taupe', name: 'Taupe', hex: '#C4B0A6' },
@@ -44,7 +44,7 @@
     theme: null,            // null = the system's primary theme (dark) until the user picks
     setSkin: false,         // false = random hand each session
     skinTone: 'tan',
-    hatColor: 'ember',
+    hatColor: 'red',
     amounts: DEFAULT_AMOUNTS.slice(),
     chooseAgain: 5,
     wild: 1,
@@ -61,7 +61,7 @@
     s.amounts = sanitizeAmounts(Array.isArray(s.amounts) ? s.amounts : DEFAULT_AMOUNTS);
     s.chooseAgain = U.clamp(parseInt(s.chooseAgain, 10) || 0, 0, 50);
     s.wild = U.clamp(parseInt(s.wild, 10) || 0, 0, 50);
-    if (!HAT_COLORS.some((h) => h.id === s.hatColor)) s.hatColor = 'ember';
+    if (!HAT_COLORS.some((h) => h.id === s.hatColor)) s.hatColor = 'red';
     if (!SKIN_TONES.some((t) => t.id === s.skinTone)) s.skinTone = 'tan';
     if (s.background !== 'random' && !BACKGROUNDS.includes(s.background)) s.background = 'random';
     if (s.theme !== 'light' && s.theme !== 'dark') s.theme = null;
