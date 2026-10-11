@@ -1,0 +1,67 @@
+/* Ember & Espresso components. Plain CSS classes; every value comes from tokens.css. */
+.ee { font-family: var(--font-sans); color: var(--ink); }
+.ee-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4); }
+.ee-stack { display: grid; gap: var(--space-3); padding: var(--space-4); max-width: 360px; }
+
+/* Button */
+.ee-btn { font: 600 12px/16px var(--font-sans); letter-spacing: .12em; text-transform: uppercase;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); border: 1px solid transparent; cursor: pointer; }
+.ee-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ee-btn--primary { background: var(--ember); color: var(--on-ember); }
+.ee-btn--primary:hover { filter: brightness(1.08); }
+.ee-btn--secondary { background: var(--surface-strong); color: var(--ink); }
+.ee-btn--outline { background: transparent; color: var(--ink); border-color: var(--border-strong); }
+.ee-btn--ghost { background: transparent; color: var(--ember-text); padding-inline: var(--space-2); }
+.ee-btn--block { display: flex; width: 100%; justify-content: space-between; }
+.ee-btn[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* Badge */
+.ee-badge { font: 600 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-2); border-radius: var(--radius-sm);
+  background: var(--surface-strong); color: var(--ink); }
+.ee-badge--ember { background: var(--ember); color: var(--on-ember); }
+.ee-badge--soft { background: var(--ember-soft); color: var(--ink); }
+.ee-badge::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; display: none; }
+.ee-badge--positive, .ee-badge--warning, .ee-badge--negative { background: transparent; padding-inline: 0; }
+.ee-badge--positive { color: var(--positive); } .ee-badge--warning { color: var(--warning); } .ee-badge--negative { color: var(--negative); }
+.ee-badge--positive::before, .ee-badge--warning::before, .ee-badge--negative::before { display: block; }
+
+/* Field */
+.ee-field { display: grid; gap: var(--space-1); }
+.ee-field label { font: 600 12px/16px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-muted); }
+.ee-input { font: 400 15px/22px var(--font-sans); color: var(--ink); background: var(--surface-raised);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+.ee-input::placeholder { color: var(--ink-muted); }
+.ee-input:focus { outline: 2px solid var(--ember); outline-offset: 1px; border-color: var(--ember); }
+.ee-field--error .ee-input { border-color: var(--negative); }
+.ee-field small { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); }
+.ee-field--error small { color: var(--negative); }
+
+/* Segmented */
+.ee-seg { display: flex; gap: var(--space-1); padding: var(--space-1); background: var(--surface-strong); border-radius: var(--radius-md); }
+.ee-seg button { flex: 1; font: 600 13px/18px var(--font-sans); border: 0; border-radius: 7px; padding: var(--space-2) 0; background: transparent; color: var(--ink-muted); cursor: pointer; }
+.ee-seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+
+/* Product card */
+.ee-card { background: var(--surface-raised); border-radius: var(--radius-lg); overflow: hidden; display: grid; }
+.ee-card__media { aspect-ratio: 16/10; max-width: 100%; background: radial-gradient(circle at 70% 30%, var(--mocha), var(--surface-strong) 55%, var(--surface)); }
+.ee-card__body { padding: var(--space-4); display: grid; gap: var(--space-1); }
+.ee-card__title { font: 700 20px/24px var(--font-sans); text-transform: uppercase; margin: 0; }
+.ee-card__meta { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); margin: 0; }
+.ee-card__foot { display: flex; justify-content: space-between; align-items: center; padding: 0 var(--space-4) var(--space-4); }
+.ee-price { font: 500 15px/22px var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* CTA banner (the source ad's orange box) */
+.ee-banner { background: var(--ember); color: var(--on-ember-display); border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-6); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  font: 500 24px/28px var(--font-sans); text-transform: uppercase; }
+.ee-banner a { color: inherit; font-weight: 700; text-underline-offset: 4px; }
+.ee-banner--compact { font: 600 15px/20px var(--font-sans); padding: var(--space-4); color: var(--on-ember); }
+
+/* Tab bar */
+.ee-tabbar { display: flex; justify-content: space-around; background: var(--surface-raised); border-top: 1px solid var(--border); padding: var(--space-2) var(--space-2) var(--space-3); }
+.ee-tab { display: grid; justify-items: center; gap: var(--space-1); font: 600 10px/14px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); background: none; border: 0; cursor: pointer; padding: var(--space-1) var(--space-2); }
+.ee-tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.ee-tab[aria-current="page"] { color: var(--ember-text); }
+.ee-tab[aria-current="page"]::after { content: ""; width: 4px; height: 4px; border-radius: var(--radius-pill); background: var(--ember); }

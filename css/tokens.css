@@ -1,0 +1,43 @@
+/* Ember & Espresso tokens (from the design system's tokens.json). Dark is the primary theme. */
+:root, :root[data-theme="dark"] {
+  --ember: #FF4514;
+  --ember-text: #FF6A3D;
+  --ember-soft: #4A2216;
+  --on-ember: #110E0B;
+  --on-ember-display: #FFFFFF;
+  --surface: #110E0B;
+  --surface-raised: #261F1A;
+  --surface-strong: #3D2C22;
+  --ink: #F3EAE4;
+  --ink-muted: #A8958A;
+  --border: #3A2D25;
+  --border-strong: #6B5548;
+  --mocha: #895946;
+  --rust: #8A3C20;
+  --taupe: #C4B0A6;
+  --positive: #5CC48A;
+  --warning: #E8B04A;
+  --negative: #FF7A6E;
+  --shadow-raised: 0 12px 28px -12px rgba(0,0,0,0.7);
+  --font-sans: "Jost", "Futura", "Avenir Next", "Century Gothic", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 24px; --radius-pill: 999px;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --ember-text: #C2330A;
+  --ember-soft: #FFDCCF;
+  --surface: #F6F0EC;
+  --surface-raised: #FFFFFF;
+  --surface-strong: #E8DDD6;
+  --ink: #1A140F;
+  --ink-muted: #6E5A4E;
+  --border: #DCCFC7;
+  --border-strong: #9C8578;
+  --positive: #1F7A48;
+  --warning: #8A5A00;
+  --negative: #B3261E;
+  --shadow-raised: 0 10px 24px -14px rgba(61,44,34,0.35);
+  color-scheme: light;
+}
