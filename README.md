@@ -34,7 +34,7 @@ Settings are saved on the device.
 
 ## Publishing with GitHub Pages
 
-The workflow in `.github/workflows/pages.yml` publishes the `main` branch. Turn it on once: in the repository go to Settings, then Pages, and set Source to "GitHub Actions". After the next push to `main` the game is live at `https://<your-user>.github.io/Pick-a-Tip-Out-a-Hat/`.
+The workflow in `.github/workflows/pages.yml` publishes the `main` branch and enables GitHub Pages on the repository the first time it runs. After a push to `main` the game is live at `https://<your-user>.github.io/Pick-a-Tip-Out-a-Hat/`. If the first run reports that it could not create the site, enable Pages by hand once: in the repository go to Settings, then Pages, set Source to "GitHub Actions", and re-run the workflow.
 
 ## Running it locally
 
