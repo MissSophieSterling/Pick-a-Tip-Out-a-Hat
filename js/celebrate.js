@@ -3,9 +3,12 @@
 (function () {
   'use strict';
   const { rand, randInt, pick, clamp, lerp } = U;
-  const BRIGHT = ['#ff2d95', '#ffe600', '#00e5ff', '#7cff3e', '#ff7a00', '#b14cff', '#ff3b30', '#1de9b6', '#ffffff', '#ff6ec7'];
+  // Celebration colours come from the Ember & Espresso palette: ember, its tints, taupe, white, and the warning/positive accents.
+  const BRIGHT = ['#FF4514', '#FF6A3D', '#FFDCCF', '#C4B0A6', '#FFFFFF', '#E8B04A', '#5CC48A', '#FF4514'];
+  const SHIRTS = ['#FF4514', '#895946', '#8A3C20', '#C4B0A6', '#3D2C22', '#F3EAE4', '#E8B04A', '#5CC48A'];
+  const FIRE = ['#FF4514', '#FF6A3D', '#E8B04A', '#FFFFFF', '#C4B0A6', '#5CC48A', '#FFDCCF'];
   const SKINS = ['#FADCBC', '#F3C7A1', '#E8B590', '#D9A077', '#C68642', '#B07A4B', '#8D5524', '#6E4426', '#4E2E1E', '#3B2419'];
-  const HAIR = ['#1b1b1b', '#3b2a1a', '#6b3e1e', '#c98b3a', '#e8d49a', '#8a1c1c', '#ff2d95', '#2d7dff', '#7cff3e', '#b14cff'];
+  const HAIR = ['#1b1b1b', '#3b2a1a', '#6b3e1e', '#c98b3a', '#e8d49a', '#8a1c1c', '#C4B0A6'];
   const TWO_PI = Math.PI * 2;
 
   function starPath(ctx, cx, cy, rOuter, rInner, n, rot) {
@@ -65,13 +68,12 @@
       ctx.restore();
     }
     draw(ctx, w, h) {
-      const hue = (this.t * 25) % 360;
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, `hsl(${hue},95%,62%)`); g.addColorStop(0.5, `hsl(${(hue + 50) % 360},95%,58%)`); g.addColorStop(1, `hsl(${(hue + 110) % 360},95%,55%)`);
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#8A3C20'); g.addColorStop(0.45, '#3D2C22'); g.addColorStop(1, '#110E0B');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      // soft glow rays
-      ctx.save(); ctx.globalAlpha = 0.18; ctx.translate(w / 2, h / 2); ctx.rotate(this.t * 0.25);
-      for (let i = 0; i < 10; i++) { ctx.rotate(TWO_PI / 10); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 1.5, -w * 0.12); ctx.lineTo(w * 1.5, w * 0.12); ctx.closePath(); ctx.fill(); }
+      // soft ember rays
+      ctx.save(); ctx.globalAlpha = 0.14; ctx.translate(w / 2, h / 2); ctx.rotate(this.t * 0.25);
+      for (let i = 0; i < 10; i++) { ctx.rotate(TWO_PI / 10); ctx.fillStyle = '#FF4514'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 1.5, -w * 0.12); ctx.lineTo(w * 1.5, w * 0.12); ctx.closePath(); ctx.fill(); }
       ctx.restore();
       for (const p of this.rain) this.drawPiece(ctx, p, 0.95);
       for (const p of this.burst) this.drawPiece(ctx, p, clamp(1 - (p.age / p.life - 0.7) / 0.3, 0, 1));
@@ -90,10 +92,10 @@
     }
     spawnWarp(any) {
       const a = rand(0, TWO_PI);
-      return { a, r: any ? rand(4, Math.max(this.w, this.h) * 0.7) : rand(2, 30), c: pick(['#ffffff', '#ffe600', '#00e5ff', '#ff6ec7', '#ffffff', '#ffffff']), sp: rand(0.9, 1.6) };
+      return { a, r: any ? rand(4, Math.max(this.w, this.h) * 0.7) : rand(2, 30), c: pick(['#ffffff', '#E8B04A', '#FF6A3D', '#C4B0A6', '#ffffff', '#ffffff']), sp: rand(0.9, 1.6) };
     }
     spawnBig(age) {
-      return { x: rand(0.05, 0.95) * this.w, y: rand(0.05, 0.95) * this.h, age: age || 0, life: rand(2.4, 4.2), size: rand(14, 42), c: pick(['#ffe600', '#ffffff', '#00e5ff', '#ff6ec7', '#7cff3e', '#ffb340']), rot: rand(0, TWO_PI), rv: rand(-0.8, 0.8), tw: rand(4, 9) };
+      return { x: rand(0.05, 0.95) * this.w, y: rand(0.05, 0.95) * this.h, age: age || 0, life: rand(2.4, 4.2), size: rand(14, 42), c: pick(['#E8B04A', '#ffffff', '#FF6A3D', '#C4B0A6', '#FFDCCF', '#FF4514']), rot: rand(0, TWO_PI), rv: rand(-0.8, 0.8), tw: rand(4, 9) };
     }
     step(dt) {
       this.t += dt;
@@ -111,8 +113,7 @@
     }
     draw(ctx, w, h) {
       const g = ctx.createRadialGradient(this.cx, this.cy, 10, this.cx, this.cy, Math.max(w, h) * 0.8);
-      const hue = (this.t * 12) % 360;
-      g.addColorStop(0, `hsl(${(hue + 260) % 360},70%,28%)`); g.addColorStop(0.6, '#140a33'); g.addColorStop(1, '#05030f');
+      g.addColorStop(0, '#3D2C22'); g.addColorStop(0.6, '#1a1310'); g.addColorStop(1, '#110E0B');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       // warp streaks
       ctx.lineCap = 'round';
@@ -158,22 +159,22 @@
       this.next = 0.5;
     }
     launch(x) {
-      this.rockets.push({ x: x !== undefined ? x : rand(this.w * 0.12, this.w * 0.88), y: this.h + 10, vx: rand(-30, 30), vy: -rand(this.h * 0.95, this.h * 1.35), hue: randInt(0, 360), trail: [] });
+      this.rockets.push({ x: x !== undefined ? x : rand(this.w * 0.12, this.w * 0.88), y: this.h + 10, vx: rand(-30, 30), vy: -rand(this.h * 0.95, this.h * 1.35), c: pick(FIRE), trail: [] });
       if (window.Sfx) Sfx.whistleUp();
     }
     explode(r) {
       const shape = Math.random() < 0.2 ? 'heart' : Math.random() < 0.25 ? 'ring' : 'burst';
       const n = shape === 'burst' ? randInt(70, 110) : 80;
-      const hue2 = (r.hue + randInt(40, 180)) % 360;
+      const c2 = pick(FIRE);
       const base = rand(120, 240);
       for (let i = 0; i < n; i++) {
         let vx, vy;
         if (shape === 'heart') { const [hx, hy] = heartPoint((i / n) * TWO_PI); vx = hx * base * 1.3; vy = hy * base * 1.3; }
         else if (shape === 'ring') { const a = (i / n) * TWO_PI; vx = Math.cos(a) * base * 1.2; vy = Math.sin(a) * base * 1.2; }
         else { const a = rand(0, TWO_PI), sp = base * Math.sqrt(Math.random()) * 1.3; vx = Math.cos(a) * sp; vy = Math.sin(a) * sp; }
-        this.parts.push({ x: r.x, y: r.y, vx, vy, hue: Math.random() < 0.5 ? r.hue : hue2, life: rand(1.1, 2.2), age: 0, size: rand(1.8, 3.4), tw: rand(8, 20), crackle: Math.random() < 0.15 });
+        this.parts.push({ x: r.x, y: r.y, vx, vy, c: Math.random() < 0.5 ? r.c : c2, life: rand(1.1, 2.2), age: 0, size: rand(1.8, 3.4), tw: rand(8, 20), crackle: Math.random() < 0.15 });
       }
-      this.flashes.push({ x: r.x, y: r.y, age: 0, hue: r.hue });
+      this.flashes.push({ x: r.x, y: r.y, age: 0, c: r.c });
       if (window.Sfx) { Sfx.boom(); if (Math.random() < 0.5) Sfx.crackle(); }
     }
     step(dt) {
@@ -196,7 +197,7 @@
     }
     draw(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#070a24'); g.addColorStop(0.6, '#1b0b3f'); g.addColorStop(1, '#3a0b5e');
+      g.addColorStop(0, '#110E0B'); g.addColorStop(0.6, '#261F1A'); g.addColorStop(1, '#3D2C22');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = '#fff';
       for (const s of this.bgStars) { ctx.globalAlpha = 0.4 + 0.4 * Math.sin(this.t * 2 + s.ph); ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TWO_PI); ctx.fill(); }
@@ -204,18 +205,18 @@
       for (const f of this.flashes) {
         const u = f.age / 0.3;
         const rg = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 260 * (0.4 + u));
-        rg.addColorStop(0, `hsla(${f.hue},100%,85%,${0.55 * (1 - u)})`); rg.addColorStop(1, `hsla(${f.hue},100%,60%,0)`);
+        rg.addColorStop(0, f.c + Math.round(0.5 * (1 - u) * 255).toString(16).padStart(2, '0')); rg.addColorStop(1, f.c + '00');
         ctx.fillStyle = rg; ctx.fillRect(0, 0, w, h);
       }
       for (const r of this.rockets) {
-        for (const tp of r.trail) { ctx.globalAlpha = clamp(1 - tp.age * 3, 0, 1) * 0.8; ctx.fillStyle = `hsl(${r.hue},100%,75%)`; ctx.beginPath(); ctx.arc(tp.x, tp.y, 2.2, 0, TWO_PI); ctx.fill(); }
+        for (const tp of r.trail) { ctx.globalAlpha = clamp(1 - tp.age * 3, 0, 1) * 0.8; ctx.fillStyle = r.c; ctx.beginPath(); ctx.arc(tp.x, tp.y, 2.2, 0, TWO_PI); ctx.fill(); }
         ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, 3, 0, TWO_PI); ctx.fill();
       }
       for (const p of this.parts) {
         const u = p.age / p.life;
         const tw = p.crackle ? (Math.sin(p.age * p.tw) > 0 ? 1 : 0.2) : 0.75 + 0.25 * Math.sin(p.age * p.tw);
         ctx.globalAlpha = clamp((1 - u) * 1.3, 0, 1) * tw;
-        ctx.fillStyle = `hsl(${p.hue},100%,${u < 0.2 ? 85 : 62}%)`;
+        ctx.fillStyle = u < 0.2 ? '#FFFFFF' : p.c;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - u * 0.5), 0, TWO_PI); ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -242,9 +243,9 @@
           const ch = d.signs ? this.phrase[i] : null;
           people.push({
             x: i * sp + (d.signs ? sp / 2 : rand(0, sp * 0.5)),
-            shirt: pick(BRIGHT.filter((c) => c !== '#ffffff')), skin: pick(SKINS), hair: pick(HAIR), cap: Math.random() < 0.35, capColor: pick(BRIGHT),
+            shirt: pick(SHIRTS), skin: pick(SKINS), hair: pick(HAIR), cap: Math.random() < 0.35, capColor: pick(SHIRTS),
             ph: rand(0, TWO_PI), ph2: rand(0, TWO_PI), wf: rand(5, 9), bf: rand(3, 6),
-            sign: ch && ch !== ' ' ? { ch, color: pick(['#ff2d95', '#2d7dff', '#ff7a00', '#7d2ae8', '#e0222e', '#1f9d4b', '#13b5b1']), tilt: rand(-0.12, 0.12) } : null,
+            sign: ch && ch !== ' ' ? { ch, color: '#FF4514', tilt: rand(-0.12, 0.12) } : null,
             foam: !ch && Math.random() < 0.15,
           });
         }
@@ -254,7 +255,7 @@
       this.flashes = [];
       this.confetti = [];
       for (let i = 0; i < 70; i++) this.confetti.push({ x: rand(0, w), y: rand(-h, h), vy: rand(60, 140), c: pick(BRIGHT), ang: rand(0, TWO_PI), av: rand(-4, 4), s: rand(5, 10) });
-      this.lights = [{ x: 0.1, ph: 0, c: '#ff2d95' }, { x: 0.9, ph: 2, c: '#00e5ff' }, { x: 0.5, ph: 4, c: '#ffe600' }];
+      this.lights = [{ x: 0.1, ph: 0, c: '#FF4514' }, { x: 0.9, ph: 2, c: '#C4B0A6' }, { x: 0.5, ph: 4, c: '#E8B04A' }];
       this.nextFlash = 0;
     }
     step(dt) {
@@ -267,8 +268,8 @@
     drawPerson(ctx, p, x, baseY, s, tint, t, withSign) {
       const bounce = Math.abs(Math.sin(t * p.bf + p.ph)) * 14 * s;
       const y = baseY - bounce;
-      const shirt = tint < 1 ? U.mix(p.shirt, '#1a0b3a', 1 - tint) : p.shirt;
-      const skin = tint < 1 ? U.mix(p.skin, '#1a0b3a', 1 - tint) : p.skin;
+      const shirt = tint < 1 ? U.mix(p.shirt, '#110E0B', 1 - tint) : p.shirt;
+      const skin = tint < 1 ? U.mix(p.skin, '#110E0B', 1 - tint) : p.skin;
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(s, s);
@@ -283,7 +284,7 @@
       ctx.fillStyle = skin;
       ctx.beginPath(); ctx.arc(lx, ly, 7, 0, TWO_PI); ctx.fill();
       ctx.beginPath(); ctx.arc(rx, ry, 7, 0, TWO_PI); ctx.fill();
-      if (p.foam) { ctx.fillStyle = '#ffe600'; ctx.beginPath(); ctx.roundRect(lx - 12, ly - 34, 24, 34, 6); ctx.fill(); ctx.fillStyle = '#e0222e'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('#1', lx, ly - 10); }
+      if (p.foam) { ctx.fillStyle = '#F3EAE4'; ctx.beginPath(); ctx.roundRect(lx - 12, ly - 34, 24, 34, 6); ctx.fill(); ctx.fillStyle = '#FF4514'; ctx.font = '800 18px "Jost", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('#1', lx, ly - 10); }
       // body
       ctx.fillStyle = shirt;
       ctx.beginPath(); ctx.roundRect(-24, -62, 48, 64, 12); ctx.fill();
@@ -304,9 +305,9 @@
         ctx.translate(rx, ry);
         ctx.rotate(p.sign.tilt + Math.sin(t * 3 + p.ph) * 0.08);
         ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -40); ctx.stroke();
-        ctx.fillStyle = '#fffdf2'; ctx.strokeStyle = p.sign.color; ctx.lineWidth = 5;
+        ctx.fillStyle = '#F3EAE4'; ctx.strokeStyle = '#C4B0A6'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.roundRect(-34, -108, 68, 68, 8); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = p.sign.color; ctx.font = '900 50px "Luckiest Guy", "Fredoka", Impact, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = p.sign.color; ctx.font = '800 50px "Jost", "Futura", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(p.sign.ch, 0, -72);
         ctx.restore();
       }
@@ -315,7 +316,7 @@
     draw(ctx, w, h) {
       const t = this.t;
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#0d0624'); g.addColorStop(0.55, '#2a0b4e'); g.addColorStop(1, '#4b1272');
+      g.addColorStop(0, '#110E0B'); g.addColorStop(0.55, '#261F1A'); g.addColorStop(1, '#8A3C20');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       // sweeping spotlights
       ctx.save(); ctx.globalCompositeOperation = 'lighter';

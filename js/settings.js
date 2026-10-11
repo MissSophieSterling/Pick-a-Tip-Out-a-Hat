@@ -20,27 +20,31 @@
   ];
 
   const HAT_COLORS = [
+    { id: 'ember', name: 'Ember', hex: '#FF4514' },
     { id: 'red', name: 'Red (classic)', hex: '#e0222e' },
-    { id: 'blue', name: 'Royal Blue', hex: '#1e5bff' },
-    { id: 'navy', name: 'Navy', hex: '#1b2a5c' },
+    { id: 'rust', name: 'Rust', hex: '#8A3C20' },
+    { id: 'mocha', name: 'Mocha', hex: '#895946' },
+    { id: 'taupe', name: 'Taupe', hex: '#C4B0A6' },
+    { id: 'espresso', name: 'Espresso', hex: '#261F1A' },
     { id: 'black', name: 'Black', hex: '#2a2a30' },
+    { id: 'white', name: 'White', hex: '#f4f4f6' },
+    { id: 'navy', name: 'Navy', hex: '#1b2a5c' },
+    { id: 'blue', name: 'Royal Blue', hex: '#1e5bff' },
     { id: 'green', name: 'Green', hex: '#1f9d4b' },
+    { id: 'teal', name: 'Teal', hex: '#13b5b1' },
     { id: 'purple', name: 'Purple', hex: '#7d2ae8' },
     { id: 'pink', name: 'Hot Pink', hex: '#ff3fa4' },
-    { id: 'orange', name: 'Orange', hex: '#ff7a1a' },
     { id: 'yellow', name: 'Yellow', hex: '#ffcf1b' },
-    { id: 'teal', name: 'Teal', hex: '#13b5b1' },
     { id: 'maroon', name: 'Maroon', hex: '#7a1b2e' },
-    { id: 'white', name: 'White', hex: '#f4f4f6' },
   ];
 
   const BACKGROUNDS = ['crowd', 'confetti', 'stars', 'fireworks'];
 
   const DEFAULTS = {
-    theme: null,            // null = follow system until the user picks
+    theme: null,            // null = the system's primary theme (dark) until the user picks
     setSkin: false,         // false = random hand each session
     skinTone: 'tan',
-    hatColor: 'red',
+    hatColor: 'ember',
     amounts: DEFAULT_AMOUNTS.slice(),
     chooseAgain: 5,
     wild: 1,
@@ -57,7 +61,7 @@
     s.amounts = sanitizeAmounts(Array.isArray(s.amounts) ? s.amounts : DEFAULT_AMOUNTS);
     s.chooseAgain = U.clamp(parseInt(s.chooseAgain, 10) || 0, 0, 50);
     s.wild = U.clamp(parseInt(s.wild, 10) || 0, 0, 50);
-    if (!HAT_COLORS.some((h) => h.id === s.hatColor)) s.hatColor = 'red';
+    if (!HAT_COLORS.some((h) => h.id === s.hatColor)) s.hatColor = 'ember';
     if (!SKIN_TONES.some((t) => t.id === s.skinTone)) s.skinTone = 'tan';
     if (s.background !== 'random' && !BACKGROUNDS.includes(s.background)) s.background = 'random';
     if (s.theme !== 'light' && s.theme !== 'dark') s.theme = null;
@@ -78,16 +82,13 @@
     return out.length ? out : DEFAULT_AMOUNTS.slice();
   }
 
-  function effectiveTheme() {
-    if (state.theme) return state.theme;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
+  function effectiveTheme() { return state.theme || 'dark'; }
 
   function applyTheme() {
     const t = effectiveTheme();
     document.documentElement.setAttribute('data-theme', t);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', t === 'dark' ? '#1a0b2e' : '#ff2d95');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#110E0B' : '#F6F0EC');
   }
 
   const Settings = {
@@ -111,11 +112,6 @@
   };
 
   applyTheme();
-  if (window.matchMedia) {
-    try {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!state.theme) applyTheme(); });
-    } catch (e) { /* older Safari */ }
-  }
 
   window.Settings = Settings;
 })();

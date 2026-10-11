@@ -421,7 +421,7 @@
           sg.appendChild(svg('line', { x1: -36, y1: 13, x2: 36, y2: 13, stroke: '#d9cb94', 'stroke-width': 1, 'stroke-dasharray': '3 2' }));
           if (o.label) {
             const fs = o.label.length <= 3 ? 26 : o.label.length <= 4 ? 23 : o.label.length <= 5 ? 20 : 17;
-            sg.appendChild(svg('text', { x: 0, y: 13 + fs * 0.36, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': 700, fill: '#1b2a49', 'font-family': 'Fredoka, Arial, sans-serif' }, [o.label]));
+            sg.appendChild(svg('text', { x: 0, y: 13 + fs * 0.36, 'text-anchor': 'middle', 'font-size': fs, 'font-weight': 500, fill: '#1A140F', 'font-family': '"DM Mono", ui-monospace, Menlo, monospace' }, [o.label]));
           }
           held.appendChild(sg);
         }

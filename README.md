@@ -1,6 +1,6 @@
 # Pick a Tip Out of a Hat
 
-A bright little mobile game for tipping your Dasher. Delivered per instructions? Then the tip gets picked out of a red ball cap, with a hand that looks different every session, a nervous clock, a rising Shepard tone, and a celebration when the number lands.
+A small mobile game for tipping your Dasher. Delivered per instructions? Then the tip gets picked out of a red ball cap, with a hand that looks different every session, a nervous clock, a rising Shepard tone, and a celebration when the number lands.
 
 It is a web app that installs to a phone's home screen (a PWA), so there is nothing to sideload and no app store. Open it in the phone's browser, add it to the home screen, and it runs full screen and offline.
 
@@ -25,7 +25,7 @@ $1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 4
 
 - **Theme**: light or dark. Follows the phone until you pick one.
 - **The hand**: skin tone is random every session unless you switch on "Set skin tone" and pick one. Rings, stacked rings, watch, bracelets, nail polish, freckles and tattoos are rolled at random; "New random hand" rolls again.
-- **The hat**: the cap color (red by default).
+- **The hat**: the cap color (ember by default, with the classic red one tap away).
 - **Tip amounts**: tap a chip to remove it, type to add one, set how many Choose Again and Wild Card slips go in, or reset to the defaults.
 - **Celebration**: the winner background. Random by default, or pick one: the crowd going wild (a scrolling panorama where each fan holds a letter of "WE GOT A WINNER!"), confetti, stars expanding into view, or fireworks.
 - **Sound** on or off. Every sound is synthesized in the browser: the scribble, the toss, the rattle of the cap, the clock, the Shepard tone and the fanfare.
@@ -46,6 +46,12 @@ npx http-server -p 8080 .
 
 Then open `http://localhost:8080/`. Add `?fast=1` to the URL to speed every animation up about eight times, or `?speed=0.5` for half speed, which is handy when testing.
 
+## Design
+
+The app follows the Ember & Espresso design system: coffee-brown surfaces, white type, and one ember orange that marks the single thing to tap. Jost carries the type (uppercase, imperative headlines) and DM Mono carries every number, from the tip amounts to the slip counter. Corners are 14px, depth is flat, icons are 22px line icons, and there are no emoji. The system's tokens are in `css/tokens.css` and its component classes (`ee-btn`, `ee-banner`, `ee-field`, `ee-seg`, `ee-badge`) are used unchanged from `css/ember-espresso.css`. Dark is the primary theme; light uses the system's light tokens.
+
+The celebrations keep their motion but draw from the same palette: ember and its tints, taupe, white, and the system's gold and green accents on warm dark grounds.
+
 ## How it is built
 
 No framework and no build step: plain HTML, CSS and JavaScript.
@@ -58,4 +64,5 @@ No framework and no build step: plain HTML, CSS and JavaScript.
 | `js/celebrate.js` | The four canvas celebrations. |
 | `js/game.js` | Screens, the settings drawer and the round: write, toss, shake, reach, suspense, reveal. |
 | `js/settings.js` | Defaults and saved settings. |
+| `css/tokens.css`, `css/ember-espresso.css` | The design system's tokens and component classes. |
 | `sw.js`, `manifest.webmanifest` | Offline cache and home-screen install. |
