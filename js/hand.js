@@ -205,8 +205,6 @@
 
     const skin = look.skin;
     const outline = shade(skin, -0.32);
-    const crease = shade(skin, -0.18);
-    const hi = shade(skin, 0.28);
 
     // defs: metal gradients + skin gradient
     const defs = svg('defs');
@@ -217,11 +215,6 @@
       g.appendChild(svg('stop', { offset: 1, 'stop-color': METALS[m].c }));
       defs.appendChild(g);
     }
-    const sg = svg('linearGradient', { id: `${id}-skin`, x1: 0, y1: 0, x2: 1, y2: 0 });
-    sg.appendChild(svg('stop', { offset: 0, 'stop-color': shade(skin, -0.08) }));
-    sg.appendChild(svg('stop', { offset: 0.45, 'stop-color': skin }));
-    sg.appendChild(svg('stop', { offset: 1, 'stop-color': shade(skin, 0.1) }));
-    defs.appendChild(sg);
     const scr = svg('linearGradient', { id: `${id}-screen`, x1: 0, y1: 0, x2: 1, y2: 1 });
     scr.appendChild(svg('stop', { offset: 0, 'stop-color': '#ff2d95' }));
     scr.appendChild(svg('stop', { offset: 0.5, 'stop-color': '#7d2ae8' }));
@@ -245,9 +238,7 @@
     FINGERS.forEach((f, i) => {
       const fg = svg('g', { transform: `translate(${f.x},95)` });
       const bend = svg('g');
-      bend.appendChild(svg('rect', { x: -10.5, y: -14, width: 21, height: f.len + 14, rx: 10.5, fill: `url(#${id}-skin)`, stroke: outline, 'stroke-width': 2.5 }));
-      bend.appendChild(svg('path', { d: `M-7,${f.len * 0.42} Q0,${f.len * 0.42 + 3} 7,${f.len * 0.42}`, fill: 'none', stroke: crease, 'stroke-width': 1.6, opacity: 0.7 }));
-      bend.appendChild(svg('path', { d: `M-7,${f.len * 0.7} Q0,${f.len * 0.7 + 3} 7,${f.len * 0.7}`, fill: 'none', stroke: crease, 'stroke-width': 1.6, opacity: 0.7 }));
+      bend.appendChild(svg('rect', { x: -10.5, y: -14, width: 21, height: f.len + 14, rx: 10.5, fill: skin, stroke: outline, 'stroke-width': 2.5 }));
       // nail
       bend.appendChild(svg('ellipse', { cx: 0, cy: f.len - 8, rx: 6.5, ry: 8, fill: nailFill, stroke: nailStroke, 'stroke-width': 1.2 }));
       bend.appendChild(svg('ellipse', { cx: -2, cy: f.len - 11, rx: 1.8, ry: 2.6, fill: '#fff', opacity: 0.55 }));
@@ -273,8 +264,7 @@
 
     // ---- thumb ----
     const thumbG = svg('g', { transform: `translate(${THUMB.x},${THUMB.y}) rotate(-40)` });
-    thumbG.appendChild(svg('rect', { x: -11.5, y: -40, width: 23, height: THUMB.len + 40, rx: 11.5, fill: `url(#${id}-skin)`, stroke: outline, 'stroke-width': 2.5 }));
-    thumbG.appendChild(svg('path', { d: `M-7,${THUMB.len * 0.55} Q0,${THUMB.len * 0.55 + 3} 7,${THUMB.len * 0.55}`, fill: 'none', stroke: crease, 'stroke-width': 1.6, opacity: 0.7 }));
+    thumbG.appendChild(svg('rect', { x: -11.5, y: -40, width: 23, height: THUMB.len + 40, rx: 11.5, fill: skin, stroke: outline, 'stroke-width': 2.5 }));
     thumbG.appendChild(svg('ellipse', { cx: 0, cy: THUMB.len - 9, rx: 7, ry: 8.5, fill: nailFill, stroke: nailStroke, 'stroke-width': 1.2 }));
     thumbG.appendChild(svg('ellipse', { cx: -2, cy: THUMB.len - 12, rx: 1.8, ry: 2.6, fill: '#fff', opacity: 0.55 }));
     look.rings.filter((r) => r.finger === 4).forEach((r) => {
@@ -285,15 +275,12 @@
     root.appendChild(thumbG);
 
     // ---- silhouette: forearm + back of hand ----
+    // one smooth shape in one flat colour: no creases, knuckle lines or highlights
     const body = svg('path', {
-      d: 'M-41,-300 L-36,-6 C-50,30 -54,66 -47,96 Q-33,104 -22,95 Q-11,104 0,95 Q11,104 22,95 Q33,104 47,96 C54,66 50,30 36,-6 L41,-300 Z',
-      fill: `url(#${id}-skin)`, stroke: outline, 'stroke-width': 2.5, 'stroke-linejoin': 'round',
+      d: 'M-41,-300 L-36,-6 C-50,30 -54,66 -47,96 Q0,106 47,96 C54,66 50,30 36,-6 L41,-300 Z',
+      fill: skin, stroke: outline, 'stroke-width': 2.5, 'stroke-linejoin': 'round',
     });
     root.appendChild(body);
-    // soft highlight along the left edge, wrist crease, knuckle dimples
-    root.appendChild(svg('path', { d: 'M-30,-290 L-27,-10 C-38,30 -42,66 -38,92', fill: 'none', stroke: hi, 'stroke-width': 5, opacity: 0.35, 'stroke-linecap': 'round' }));
-    root.appendChild(svg('path', { d: 'M-30,2 Q0,8 30,2', fill: 'none', stroke: crease, 'stroke-width': 1.8, opacity: 0.6 }));
-    FINGERS.forEach((f) => root.appendChild(svg('path', { d: `M${f.x - 6},88 Q${f.x},84 ${f.x + 6},88`, fill: 'none', stroke: crease, 'stroke-width': 1.8, opacity: 0.7 })));
     if (look.freckles) for (let k = 0; k < 9; k++) root.appendChild(svg('circle', { cx: rand(-30, 30), cy: rand(20, 80), r: rand(0.8, 1.6), fill: shade(skin, -0.3), opacity: 0.6 }));
 
     // ---- tattoo ----
