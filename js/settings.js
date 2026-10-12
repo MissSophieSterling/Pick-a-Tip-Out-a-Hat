@@ -50,6 +50,8 @@
     wild: 1,
     background: 'random',
     sound: true,
+    skin: 'ember',          // 'ember' (the design system) or 'party' (the first look, unlocked by the Easter egg)
+    eggFound: false,
   };
 
   let state = load();
@@ -65,6 +67,8 @@
     if (!SKIN_TONES.some((t) => t.id === s.skinTone)) s.skinTone = 'tan';
     if (s.background !== 'random' && !BACKGROUNDS.includes(s.background)) s.background = 'random';
     if (s.theme !== 'light' && s.theme !== 'dark') s.theme = null;
+    if (s.skin !== 'party') s.skin = 'ember';
+    s.eggFound = !!s.eggFound;
     return s;
   }
 
@@ -87,8 +91,9 @@
   function applyTheme() {
     const t = effectiveTheme();
     document.documentElement.setAttribute('data-theme', t);
+    document.documentElement.setAttribute('data-skin', state.skin);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', t === 'dark' ? '#110E0B' : '#F6F0EC');
+    if (meta) meta.setAttribute('content', state.skin === 'party' ? (t === 'dark' ? '#1a0b2e' : '#ff2d95') : (t === 'dark' ? '#110E0B' : '#F6F0EC'));
   }
 
   const Settings = {
@@ -98,6 +103,7 @@
     setAmounts(list) { state.amounts = sanitizeAmounts(list); save(); },
     resetAmounts() { state.amounts = DEFAULT_AMOUNTS.slice(); state.chooseAgain = DEFAULTS.chooseAgain; state.wild = DEFAULTS.wild; save(); },
     effectiveTheme, applyTheme,
+    isParty: () => state.skin === 'party',
     hatHex: () => (HAT_COLORS.find((h) => h.id === state.hatColor) || HAT_COLORS[0]).hex,
     skinHex: () => (SKIN_TONES.find((t) => t.id === state.skinTone) || SKIN_TONES[4]).hex,
     /** Total slips in the hat */

@@ -15,10 +15,11 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Fredoka:wght@400;500;600;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/ember-espresso.css">
   <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/party.css">
 </head>
 <body class="ee">
   <svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -39,9 +40,9 @@
   </svg>
 
   <header class="topbar">
-    <button id="btn-home" class="icon-btn" type="button" aria-label="Home" hidden><svg class="icon"><use href="#i-home"/></svg></button>
+    <button id="btn-home" class="icon-btn" type="button" aria-label="Home" hidden><span class="party-only">🏠</span><svg class="icon ember-only"><use href="#i-home"/></svg></button>
     <div class="spacer"></div>
-    <button id="btn-menu" class="icon-btn" type="button" aria-label="Open settings" aria-controls="drawer" aria-expanded="false"><svg class="icon"><use href="#i-menu"/></svg></button>
+    <button id="btn-menu" class="icon-btn" type="button" aria-label="Open settings" aria-controls="drawer" aria-expanded="false"><span class="burger party-only"><i></i><i></i><i></i></span><svg class="icon ember-only"><use href="#i-menu"/></svg></button>
   </header>
 
   <main id="app">
@@ -61,9 +62,9 @@
       </div>
 
       <div class="actions">
-        <button id="btn-mode-value" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span>Draw a tip</span><svg class="icon"><use href="#i-arrow"/></svg></button>
+        <button id="btn-mode-value" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🎩</span><span>Draw a tip</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
         <p class="t-small muted">Pull a slip. The amount on it is the tip.</p>
-        <button id="btn-mode-number" class="ee-btn ee-btn--outline ee-btn--block ee-btn--lg" type="button"><span>Pick a number</span><svg class="icon"><use href="#i-arrow"/></svg></button>
+        <button id="btn-mode-number" class="ee-btn ee-btn--outline ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🔢</span><span>Pick a number</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
         <p class="t-small muted">Choose a number. Its card hides the tip.</p>
       </div>
       <p class="t-small muted summary" id="slip-summary"></p>
@@ -78,7 +79,7 @@
       <div id="number-grid" class="number-grid"></div>
       <div class="pick-actions">
         <div class="picked t-numeric" id="picked-display">?</div>
-        <button id="btn-lock" class="ee-btn ee-btn--primary ee-btn--lg" type="button" disabled><svg class="icon"><use href="#i-lock"/></svg><span>Lock it in</span></button>
+        <button id="btn-lock" class="ee-btn ee-btn--primary ee-btn--lg" type="button" disabled><span class="emoji party-only">🔒</span><svg class="icon ember-only"><use href="#i-lock"/></svg><span>Lock it in</span></button>
       </div>
     </section>
 
@@ -112,7 +113,7 @@
         </svg>
         <div id="vignette" class="vignette"></div>
       </div>
-      <button id="btn-abort" class="ee-btn ee-btn--ghost" type="button"><svg class="icon"><use href="#i-close"/></svg><span>Cancel</span></button>
+      <button id="btn-abort" class="ee-btn ee-btn--ghost" type="button"><span class="party-only">✕</span><svg class="icon ember-only"><use href="#i-close"/></svg><span>Cancel</span></button>
     </section>
 
   </main>
@@ -128,14 +129,17 @@
         <p class="t-body muted" id="result-sub">That's the tip. Thank you, Dasher.</p>
       </div>
       <div class="again-block" id="result-again" hidden>
+        <div class="again-card party-only"><div class="t-title">Oooh, so close!</div><div class="again-word">Choose again</div></div>
         <p class="t-body muted" id="again-sub">Not that one. Back into the hat.</p>
         <div class="ee-banner"><span>Choose again.<br><a href="#" id="btn-again">Draw again</a>.</span><svg class="banner-arrow" viewBox="0 0 44 28" aria-hidden="true"><path d="M2 14h34m-10-10 12 10-12 10"/></svg></div>
       </div>
       <div class="result-actions">
-        <button id="btn-replay" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span>Play again</span><svg class="icon"><use href="#i-play"/></svg></button>
+        <button id="btn-replay" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🎉</span><span>Play again</span><svg class="icon ember-only"><use href="#i-play"/></svg></button>
       </div>
     </div>
   </div>
+
+  <div id="balloons" class="balloons" hidden></div>
 
   <!-- SETTINGS DRAWER -->
   <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
@@ -146,13 +150,25 @@
     </div>
     <div class="drawer-body">
 
+      <section class="set" id="look-section" hidden>
+        <h3 class="t-label">Look</h3>
+        <div class="row">
+          <span class="t-body">Style</span>
+          <div class="ee-seg" role="group" aria-label="Look">
+            <button type="button" class="skin-btn" data-skin-choice="ember" aria-pressed="true">Ember</button>
+            <button type="button" class="skin-btn" data-skin-choice="party" aria-pressed="false">Party</button>
+          </div>
+        </div>
+        <p class="t-small muted">You found the party look. Switch between the two any time.</p>
+      </section>
+
       <section class="set">
         <h3 class="t-label">Appearance</h3>
         <div class="row">
           <span class="t-body">Theme</span>
           <div class="ee-seg" role="group" aria-label="Theme">
-            <button type="button" class="seg-btn" data-theme-choice="dark" aria-pressed="true"><svg class="icon"><use href="#i-moon"/></svg>Dark</button>
-            <button type="button" class="seg-btn" data-theme-choice="light" aria-pressed="false"><svg class="icon"><use href="#i-sun"/></svg>Light</button>
+            <button type="button" class="seg-btn" data-theme-choice="dark" aria-pressed="true"><span class="party-only">🌙</span><svg class="icon ember-only"><use href="#i-moon"/></svg>Dark</button>
+            <button type="button" class="seg-btn" data-theme-choice="light" aria-pressed="false"><span class="party-only">☀️</span><svg class="icon ember-only"><use href="#i-sun"/></svg>Light</button>
           </div>
         </div>
       </section>
@@ -167,7 +183,7 @@
         <div class="swatches" id="skin-swatches" hidden></div>
         <div class="row">
           <span class="t-body">Accessories</span>
-          <button id="btn-reroll-hand" class="ee-btn ee-btn--secondary" type="button"><svg class="icon"><use href="#i-dice"/></svg>New random hand</button>
+          <button id="btn-reroll-hand" class="ee-btn ee-btn--secondary" type="button"><span class="party-only">🎲</span><svg class="icon ember-only"><use href="#i-dice"/></svg>New random hand</button>
         </div>
         <div class="hand-mini">
           <svg id="mini-svg" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid meet"><g id="mini-hand"></g></svg>

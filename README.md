@@ -46,6 +46,10 @@ npx http-server -p 8080 .
 
 Then open `http://localhost:8080/`. Add `?fast=1` to the URL to speed every animation up about eight times, or `?speed=0.5` for half speed, which is handy when testing.
 
+## Two looks
+
+The app ships with two looks. The default follows the Ember & Espresso design system below. The first design, bright and glossy with emoji and neon celebrations, is kept as the "party" look and is hidden behind an Easter egg: in Settings, set the tip amounts to only 7 and 11. Balloons float up, a crowd of kids cheers, and the party look appears. From then on a "Look" switch in Settings flips between the two; the amounts stay as you set them, so reset them afterwards.
+
 ## Design
 
 The app follows the Ember & Espresso design system: coffee-brown surfaces, white type, and one ember orange that marks the single thing to tap. Jost carries the type (uppercase, imperative headlines) and DM Mono carries every number, from the tip amounts to the slip counter. Corners are 14px, depth is flat, icons are 22px line icons, and there are no emoji. The system's tokens are in `css/tokens.css` and its component classes (`ee-btn`, `ee-banner`, `ee-field`, `ee-seg`, `ee-badge`) are used unchanged from `css/ember-espresso.css`. Dark is the primary theme; light uses the system's light tokens.

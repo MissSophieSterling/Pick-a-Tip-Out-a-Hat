@@ -1,8 +1,8 @@
 /* Offline cache for the app shell. Bump CACHE when files change. */
-const CACHE = 'tiphat-v2';
+const CACHE = 'tiphat-v3';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
-  './css/tokens.css', './css/ember-espresso.css', './css/app.css',
+  './css/tokens.css', './css/ember-espresso.css', './css/app.css', './css/party.css',
   './js/util.js', './js/settings.js', './js/hand.js', './js/hat.js', './js/audio.js', './js/celebrate.js', './js/game.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
 ];
