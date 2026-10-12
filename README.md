@@ -10,23 +10,22 @@ It is a web app that installs to a phone's home screen (a PWA), so there is noth
 2. On iPhone: open the link in Safari, tap Share, then "Add to Home Screen". On Android: open it in Chrome and tap "Install app" or "Add to Home screen".
 3. Tap the hat icon. Sound starts after the first tap, which is how phone browsers work.
 
-### Two ways to play
+### How a round goes
 
-- **Draw a Tip.** The hand writes the amounts on slips, tosses them in the cap, shakes it for a random stretch, reaches in and pulls one out. The slip is held for a random, anxious moment while the clock ticks, then it is revealed.
-- **Pick a Number.** First the Dasher picks a number. Every numbered card hides an amount. Same hat, same shake, same suspense; the reveal shows what was behind the chosen number.
+Tap **Draw a tip**. The hand writes the amounts on slips, tosses them in the cap, shakes it for a random stretch, reaches in and pulls one out. The slip is held for a random, anxious moment while the clock ticks, then it is revealed.
 
-Two special slips are in the hat by default: a **Wild Card** (the Dasher names the tip) and several **Choose Again** slips (back into the hat, or pick another number).
+Besides the dollar slips the hat holds a **Wild Card** (the Dasher names the tip), **blank slips** that send the hand back in, and **bonus slips** worth 1 to 5 extra draws. After a bonus slip the Dasher can keep any amount that comes up or draw again; the last draw is final, even if it is smaller.
 
 ### Default amounts
 
-$1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 45, 50, 55, 60, 67, 70, 80, 90, 100, plus 1 wild card and 5 choose-again slips. All of this is editable.
+$1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 45, 50, 55, 60, 67, 70, 80, 90, 100, plus 1 wild card, 5 blank slips and 5 bonus slips. All of this is editable.
 
 ## Settings (hamburger, top right)
 
 - **Theme**: light or dark. Follows the phone until you pick one.
 - **The hand**: skin tone is random every session unless you switch on "Set skin tone" and pick one. Rings, stacked rings, watch, bracelets, nail polish, freckles and tattoos are rolled at random; "New random hand" rolls again.
 - **The hat**: the cap color (red by default; ember and the rest of the palette are in the dropdown).
-- **Tip amounts**: tap a chip to remove it, type to add one, set how many Choose Again and Wild Card slips go in, or reset to the defaults.
+- **Tip amounts**: tap a chip to remove it, type to add one, set how many blank, Wild Card and bonus slips go in, or reset to the defaults.
 - **Celebration**: the winner background. Random by default, or pick one: the crowd going wild (a scrolling panorama where each fan holds a letter of "WE GOT A WINNER!"), confetti, stars expanding into view, or fireworks.
 - **Sound** on or off. Every sound is synthesized in the browser: the scribble, the toss, the rattle of the cap, the clock, the Shepard tone and the fanfare.
 
@@ -66,7 +65,7 @@ No framework and no build step: plain HTML, CSS and JavaScript.
 | `js/hat.js` | The upside-down cap, split into a back and a front layer so the hand can go inside it. |
 | `js/audio.js` | All sound effects, synthesized with the Web Audio API. |
 | `js/celebrate.js` | The four canvas celebrations. |
-| `js/game.js` | Screens, the settings drawer and the round: write, toss, shake, reach, suspense, reveal. |
+| `js/game.js` | Screens, the settings drawer and the round: write, toss, shake, reach, suspense, reveal, bonus draws. |
 | `js/settings.js` | Defaults and saved settings. |
 | `css/tokens.css`, `css/ember-espresso.css` | The design system's tokens and component classes. |
 | `sw.js`, `manifest.webmanifest` | Offline cache and home-screen install. |

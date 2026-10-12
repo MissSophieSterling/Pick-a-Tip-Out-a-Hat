@@ -187,6 +187,11 @@
       for (let i = 0; i < 9; i++) tone({ freq: scale[Math.min(scale.length - 1, i)], type: 'sine', dur: 0.35, gain: 0.14, delay: i * 0.07 });
       burst({ freq: 6000, type: 'highpass', dur: 0.9, gain: 0.07, attack: 0.2 });
     },
+    twinkle() {
+      if (!ready()) return;
+      [1568, 2093, 2637, 3136].forEach((f, i) => tone({ freq: f, type: 'sine', dur: 0.3, gain: 0.11, delay: i * 0.06 }));
+      burst({ freq: 7000, type: 'highpass', dur: 0.45, gain: 0.05, attack: 0.05 });
+    },
     boing() {
       tone({ freq: 520, freqEnd: 240, type: 'triangle', dur: 0.12, slide: 0.1, gain: 0.22 });
       tone({ freq: 240, freqEnd: 820, type: 'triangle', dur: 0.32, slide: 0.3, gain: 0.22, delay: 0.12 });

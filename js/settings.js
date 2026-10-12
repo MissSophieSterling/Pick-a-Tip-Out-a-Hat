@@ -48,6 +48,7 @@
     amounts: DEFAULT_AMOUNTS.slice(),
     chooseAgain: 5,
     wild: 1,
+    bonus: 5,               // bonus slips worth 1..bonus extra draws
     background: 'random',
     sound: true,
     skin: 'ember',          // 'ember' (the design system) or 'party' (the first look, unlocked by the Easter egg)
@@ -63,6 +64,8 @@
     s.amounts = sanitizeAmounts(Array.isArray(s.amounts) ? s.amounts : DEFAULT_AMOUNTS);
     s.chooseAgain = U.clamp(parseInt(s.chooseAgain, 10) || 0, 0, 50);
     s.wild = U.clamp(parseInt(s.wild, 10) || 0, 0, 50);
+    s.bonus = U.clamp(parseInt(s.bonus, 10) || 0, 0, 5);
+    if (saved && saved.bonus === undefined) s.bonus = DEFAULTS.bonus;
     if (!HAT_COLORS.some((h) => h.id === s.hatColor)) s.hatColor = 'red';
     if (!SKIN_TONES.some((t) => t.id === s.skinTone)) s.skinTone = 'tan';
     if (s.background !== 'random' && !BACKGROUNDS.includes(s.background)) s.background = 'random';
@@ -101,18 +104,19 @@
     get: () => state,
     set(patch) { Object.assign(state, patch); save(); },
     setAmounts(list) { state.amounts = sanitizeAmounts(list); save(); },
-    resetAmounts() { state.amounts = DEFAULT_AMOUNTS.slice(); state.chooseAgain = DEFAULTS.chooseAgain; state.wild = DEFAULTS.wild; save(); },
+    resetAmounts() { state.amounts = DEFAULT_AMOUNTS.slice(); state.chooseAgain = DEFAULTS.chooseAgain; state.wild = DEFAULTS.wild; state.bonus = DEFAULTS.bonus; save(); },
     effectiveTheme, applyTheme,
     isParty: () => state.skin === 'party',
     hatHex: () => (HAT_COLORS.find((h) => h.id === state.hatColor) || HAT_COLORS[0]).hex,
     skinHex: () => (SKIN_TONES.find((t) => t.id === state.skinTone) || SKIN_TONES[4]).hex,
     /** Total slips in the hat */
-    slipCount: () => state.amounts.length + state.wild + state.chooseAgain,
-    /** Build the full pool of slips: {kind:'money', value} | {kind:'wild'} | {kind:'again'} */
+    slipCount: () => state.amounts.length + state.wild + state.chooseAgain + state.bonus,
+    /** Build the full pool of slips: {kind:'money', value} | {kind:'wild'} | {kind:'again'} | {kind:'redraw', n} */
     buildPool() {
       const pool = state.amounts.map((v) => ({ kind: 'money', value: v }));
       for (let i = 0; i < state.wild; i++) pool.push({ kind: 'wild' });
       for (let i = 0; i < state.chooseAgain; i++) pool.push({ kind: 'again' });
+      for (let n = 1; n <= state.bonus; n++) pool.push({ kind: 'redraw', n });
       return pool;
     },
   };

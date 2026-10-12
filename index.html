@@ -49,9 +49,9 @@
 
     <!-- HOME -->
     <section id="screen-home" class="screen active">
-      <div class="hero">
-        <h1 class="t-display">Pick a tip<br>out of a hat</h1>
-        <p class="t-body muted">Delivered per instructions? Then it's game time.</p>
+      <div class="hero thanks">
+        <h1 class="t-display">Thank you!</h1>
+        <div class="stars" id="title-stars" aria-hidden="true"></div>
       </div>
 
       <div class="home-preview">
@@ -61,25 +61,17 @@
         </svg>
       </div>
 
-      <div class="actions">
-        <button id="btn-mode-value" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🎩</span><span>Draw a tip</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
-        <p class="t-small muted">Pull a slip. The amount on it is the tip.</p>
-        <button id="btn-mode-number" class="ee-btn ee-btn--outline ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🔢</span><span>Pick a number</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
-        <p class="t-small muted">Choose a number. Its card hides the tip.</p>
-      </div>
-      <p class="t-small muted summary" id="slip-summary"></p>
-    </section>
-
-    <!-- PICK A NUMBER -->
-    <section id="screen-pick" class="screen">
-      <div class="hero">
-        <h2 class="t-title">Pick a number</h2>
-        <p class="t-body muted">Every number hides a tip. Which one feels lucky?</p>
-      </div>
-      <div id="number-grid" class="number-grid"></div>
-      <div class="pick-actions">
-        <div class="picked t-numeric" id="picked-display">?</div>
-        <button id="btn-lock" class="ee-btn ee-btn--primary ee-btn--lg" type="button" disabled><span class="emoji party-only">🔒</span><svg class="icon ember-only"><use href="#i-lock"/></svg><span>Lock it in</span></button>
+      <div class="home-card">
+        <div class="draw-row">
+          <div class="draw-wrap">
+            <button id="btn-draw-tip" class="ee-btn ee-btn--primary ee-btn--lg" type="button"><span class="emoji party-only">🎩</span><span>Draw a tip</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
+            <div class="burst" id="draw-burst" aria-hidden="true"></div>
+          </div>
+          <p class="t-small muted draw-note">A slip is picked out of the hat. The number on it is your tip in dollars.</p>
+        </div>
+        <p class="t-heading intro">Thank you for your service. As a sign of appreciation, here's a little game.</p>
+        <p class="t-body" id="hat-text"></p>
+        <p class="t-small muted" id="odds-text"></p>
       </div>
     </section>
 
@@ -134,6 +126,8 @@
         <div class="ee-banner"><span>Choose again.<br><a href="#" id="btn-again">Draw again</a>.</span><svg class="banner-arrow" viewBox="0 0 44 28" aria-hidden="true"><path d="M2 14h34m-10-10 12 10-12 10"/></svg></div>
       </div>
       <div class="result-actions">
+        <button id="btn-keep" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button" hidden><span class="emoji party-only">🙌</span><span id="btn-keep-text">Keep it</span><svg class="icon ember-only"><use href="#i-lock"/></svg></button>
+        <button id="btn-draw" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button" hidden><span class="emoji party-only">🎩</span><span id="btn-draw-text">Draw</span><svg class="icon ember-only"><use href="#i-refresh"/></svg></button>
         <button id="btn-replay" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🎉</span><span>Play again</span><svg class="icon ember-only"><use href="#i-play"/></svg></button>
       </div>
     </div>
@@ -217,6 +211,10 @@
         <div class="row">
           <label for="set-wild" class="t-body">Wild Card slips</label>
           <input id="set-wild" class="ee-input num t-mono" type="number" inputmode="numeric" min="0" max="50">
+        </div>
+        <div class="row">
+          <label for="set-bonus" class="t-body">Bonus draw slips (1 to 5 extra draws)</label>
+          <input id="set-bonus" class="ee-input num t-mono" type="number" inputmode="numeric" min="0" max="5">
         </div>
         <button id="btn-reset-amounts" class="ee-btn ee-btn--outline" type="button">Reset to defaults</button>
       </section>

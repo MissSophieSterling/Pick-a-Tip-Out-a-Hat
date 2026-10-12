@@ -5,7 +5,7 @@
   const S = Settings;
 
   /* ---------------- DOM ---------------- */
-  const screens = { home: $('#screen-home'), pick: $('#screen-pick'), stage: $('#screen-stage') };
+  const screens = { home: $('#screen-home'), stage: $('#screen-stage') };
   const layerHand = $('#layer-hand'), layerFlying = $('#layer-flying'), layerDesk = $('#layer-desk'), layerClock = $('#layer-clock');
   const hatGroup = $('#hat-group'), slotInside = $('#hand-slot-inside'), slotFront = $('#hand-slot-front');
   const bannerText = $('#banner-text'), bannerSub = $('#banner-sub');
@@ -17,9 +17,9 @@
   let look = Hand.randomLook(S.get().setSkin ? S.skinHex() : null);
   let stageRig = null, previewRig = null, miniRig = null, stageHat = null, previewHat = null;
   let runId = 0;              // bump to cancel an in-flight round
-  let game = null;            // { mode, pool, assignment, used:Set, picked }
+  let game = null;            // { pool, bonusLeft, lastSlip, total }
   let idleRaf = 0;
-  let shepardOn = false, tickTimer = null;
+  let tickTimer = null;
   let stageDirty = false;
   let currentScreen = 'home';
   let clockHand = null, clockG = null, clockAngle = 0;
@@ -29,7 +29,6 @@
 
   /* ---------------- building ---------------- */
   function buildPreview() {
-    previewHat = Hat.create(svg('g'), svg('g'), S.hatHex());
     const ph = $('#preview-hat');
     while (ph.firstChild) ph.removeChild(ph.firstChild);
     const back = svg('g'), front = svg('g');
@@ -38,8 +37,7 @@
     wrap.appendChild(back); wrap.appendChild(front);
     ph.appendChild(wrap);
     for (let i = 0; i < 9; i++) previewHat.addSlip();
-    const hg = $('#preview-hand');
-    previewRig = Hand.create(hg, look);
+    previewRig = Hand.create($('#preview-hand'), look);
     previewRig.setPose({ x: 196, y: 58, rot: 4, scale: 1, curl: Hand.POSES.relaxed.curl.slice(), thumb: Hand.POSES.relaxed.thumb });
   }
   function buildMini() {
@@ -85,6 +83,44 @@
     if (currentScreen === 'stage') stageDirty = true; else buildStage();
   }
 
+  /* ---------------- sparkles ---------------- */
+  const STAR4 = 'M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z';
+  const STAR5 = 'M12 1.5 L14.9 8.6 L22.5 9.2 L16.7 14.1 L18.5 21.5 L12 17.5 L5.5 21.5 L7.3 14.1 L1.5 9.2 L9.1 8.6 Z';
+  function starEl(cls) {
+    const s = svg('svg', { viewBox: '0 0 24 24', class: cls });
+    s.appendChild(svg('path', { d: Math.random() < 0.6 ? STAR4 : STAR5 }));
+    s.style.setProperty('--tone', `var(--star-${pick(['a', 'b', 'c', 'd'])})`);
+    return s;
+  }
+  /** Twinkling stars of different sizes, shapes and tones around the title. */
+  function buildStars() {
+    const layer = $('#title-stars');
+    layer.innerHTML = '';
+    for (let i = 0; i < 18; i++) {
+      const s = starEl('star');
+      const size = rand(9, 34);
+      s.style.width = size + 'px'; s.style.height = size + 'px';
+      s.style.left = rand(0, 96) + '%'; s.style.top = rand(0, 90) + '%';
+      s.style.setProperty('--dur', rand(1.3, 3.2).toFixed(2) + 's');
+      s.style.setProperty('--delay', rand(0, 3).toFixed(2) + 's');
+      layer.appendChild(s);
+    }
+  }
+  /** A small burst of stars around the draw button. */
+  function starBurst() {
+    const box = $('#draw-burst');
+    box.innerHTML = '';
+    for (let i = 0; i < 14; i++) {
+      const s = starEl('spark');
+      const a = (i / 14) * Math.PI * 2 + rand(-0.3, 0.3), d = rand(70, 150);
+      s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(0) + 'px');
+      s.style.setProperty('--dy', (Math.sin(a) * d * 0.7).toFixed(0) + 'px');
+      s.style.left = rand(15, 85) + '%';
+      box.appendChild(s);
+    }
+    setTimeout(() => { box.innerHTML = ''; }, 900);
+  }
+
   /* ---------------- screens ---------------- */
   function showScreen(name) {
     currentScreen = name;
@@ -110,10 +146,20 @@
     bannerSub.textContent = sub || '';
     bannerText.classList.remove('bump'); void bannerText.offsetWidth; bannerText.classList.add('bump');
   }
-  function updateSummary() {
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  /** The home screen's description of what is in the hat, from the current settings. */
+  function updateHomeText() {
     const s = S.get();
-    const n = (v) => `<span class="t-numeric">${v}</span>`;
-    $('#slip-summary').innerHTML = `${n(s.amounts.length)} amounts · ${n(s.wild)} wild card${s.wild === 1 ? '' : 's'} · ${n(s.chooseAgain)} choose-again · ${n(S.slipCount())} slips in the hat`;
+    const min = formatMoney(Math.min(...s.amounts)), max = formatMoney(Math.max(...s.amounts));
+    $('#hat-text').textContent = `Slips run from ${min} to ${max}, skipping a few unlucky numbers. Low amounts sit close together; higher ones jump by fives, then by tens.`;
+    const extras = [];
+    if (s.wild) extras.push(`${plural(s.wild, 'wild card')} where you name the tip`);
+    if (s.chooseAgain) extras.push(`${plural(s.chooseAgain, 'blank slip')} that send you back in`);
+    if (s.bonus) extras.push(`${plural(s.bonus, 'bonus slip')} worth 1 to ${s.bonus} extra draws`);
+    let odds = 'One draw, with a real shot at a big tip. It can come up low too; that is the game, not your performance.';
+    if (extras.length) odds += ` Also in the hat: ${extras.join(', ')}.`;
+    if (s.bonus) odds += ' Keep any amount you like or draw again; the last draw is final, even if it is smaller.';
+    $('#odds-text').textContent = odds;
   }
 
   /* ---------------- hand layering ---------------- */
@@ -137,14 +183,14 @@
   const PEN_TIP = Hand.PEN_TIP;
 
   /* ---------------- phases ---------------- */
-  function slipLabel(slip, mode, number) {
-    if (mode === 'number') return '#' + number;
+  function slipLabel(slip) {
     if (slip.kind === 'money') return formatMoney(slip.value);
     if (slip.kind === 'wild') return 'WILD';
+    if (slip.kind === 'redraw') return '+' + slip.n;
     return 'AGAIN';
   }
 
-  function makeDeskSlip(label, folded) {
+  function makeDeskSlip(label) {
     const g = svg('g', { transform: 'translate(100,275) rotate(-6)' });
     g.appendChild(svg('rect', { x: -44, y: -28, width: 88, height: 56, rx: 4, fill: '#fffbe6', stroke: '#cdbb7a', 'stroke-width': 2 }));
     g.appendChild(svg('line', { x1: -44, y1: 0, x2: 44, y2: 0, stroke: '#e5d9a8', 'stroke-width': 1, 'stroke-dasharray': '4 3' }));
@@ -157,11 +203,10 @@
     const text = svg('text', { x: 0, y: 10, 'text-anchor': 'middle', 'font-size': fontSize, 'font-weight': 500, fill: '#1A140F', 'font-family': '"DM Mono", ui-monospace, Menlo, monospace', 'clip-path': `url(#${clipId})` }, [label]);
     g.appendChild(text);
     layerDesk.appendChild(g);
-    return { g, reveal: (t) => cr.setAttribute('width', (88 * t).toFixed(1)), folded };
+    return { g, reveal: (t) => cr.setAttribute('width', (88 * t).toFixed(1)) };
   }
 
   async function flySlipToHat(g, dur, run) {
-    // move the element to the flying layer and arc it into the hat
     layerFlying.appendChild(g);
     const sx = 100, sy = 275, ex = HAT.x + rand(-40, 40), ey = HAT.y - 8;
     const cx = (sx + ex) / 2 + rand(-30, 30), cy = Math.min(sy, ey) - 150;
@@ -179,7 +224,7 @@
     Sfx.drop();
   }
 
-  async function phaseWriting(run, mode) {
+  async function phaseWriting(run) {
     const pool = game.pool;
     const N = pool.length;
     handLayer('stage');
@@ -188,11 +233,10 @@
     setBanner('Writing the slips', `0 of ${N} slips`, '✍️');
 
     // pick a lively sample to show being written
-    const money = pool.map((s, i) => ({ s, i })).filter((o) => o.s.kind === 'money');
+    const money = pool.map((s, i) => ({ s, i })).filter((o) => o.s.kind === 'money').sort((a, b) => a.s.value - b.s.value);
     const sample = [];
     if (money.length) { sample.push(money[money.length - 1].i); sample.push(money[0].i); }
-    const wildIdx = pool.findIndex((s) => s.kind === 'wild'); if (wildIdx >= 0) sample.push(wildIdx);
-    const againIdx = pool.findIndex((s) => s.kind === 'again'); if (againIdx >= 0) sample.push(againIdx);
+    for (const kind of ['wild', 'again', 'redraw']) { const idx = pool.findIndex((s) => s.kind === kind); if (idx >= 0) sample.push(idx); }
     while (sample.length < Math.min(6, N)) { const i = randInt(0, N - 1); if (!sample.includes(i)) sample.push(i); }
     const show = shuffle(sample).slice(0, Math.min(6, N));
     const writePose = handAt(PEN_TIP, [100, 275], 25);
@@ -200,9 +244,7 @@
     let written = 0;
     for (let k = 0; k < show.length; k++) {
       check(run);
-      const idx = show[k];
-      const label = slipLabel(pool[idx], mode, idx + 1);
-      const slip = makeDeskSlip(label, mode === 'value');
+      const slip = makeDeskSlip(slipLabel(pool[show[k]]));
       await stageRig.moveTo(Object.assign({ curl: Hand.POSES.pinch.curl.slice(), thumb: Hand.POSES.pinch.thumb }, writePose), k === 0 ? 650 : 260, ease.out);
       check(run);
       Sfx.scribble();
@@ -213,7 +255,6 @@
       check(run);
       written = Math.min(N, Math.round(((k + 1) / show.length) * N * 0.72));
       setBanner('Writing the slips', `${written} of ${N} slips`, '✍️');
-      // flick it into the hat while the hand lifts
       Sfx.toss();
       stageRig.moveTo({ x: writePose.x + 34, y: writePose.y - 42, rot: 18 }, 220, ease.out);
       flySlipToHat(slip.g, 520, run).catch(() => {});
@@ -229,13 +270,12 @@
     const count = Math.min(12, Math.max(4, N - show.length));
     stageRig.moveTo({ x: 150, y: 190, rot: 12, curl: Hand.POSES.spread.curl.slice(), thumb: Hand.POSES.spread.thumb }, count * 45 + 200, ease.inOut);
     for (let i = 0; i < count; i++) {
-      const g = makeDeskSlip('', true).g;
+      const g = makeDeskSlip('').g;
       g.setAttribute('transform', `translate(${100 + rand(-30, 30)},${275 + rand(-20, 20)}) rotate(${rand(-30, 30)}) scale(0.8)`);
       flurry.push(flySlipToHat(g, 420 + i * 25, run).catch(() => {}));
       setBanner('And the rest', `${Math.min(N, written + Math.round(((i + 1) / count) * (N - written)))} of ${N} slips`, '🌪️');
       await wait(45);
     }
-    stageRig.hold('none');
     await Promise.all(flurry);
     check(run);
     setBanner('All in', `${N} slips in the hat`, '🎩');
@@ -245,7 +285,6 @@
   async function phaseShake(run, short) {
     check(run);
     setBanner('Shake it up', 'mixing the slips', '🫨');
-    // grab the bill
     handLayer('stage');
     stageRig.hold('none');
     const grip = handAt([0, 112], [HAT.x + 100, HAT.y + 40], 30);
@@ -270,20 +309,19 @@
     check(run);
     hatGroup.setAttribute('transform', `translate(${HAT.x},${HAT.y})`);
     stageHat.settle();
-    // let go
     handLayer('stage');
     await stageRig.moveTo({ x: grip.x + 40, y: grip.y - 90, rot: 30, curl: Hand.POSES.open.curl.slice(), thumb: Hand.POSES.open.thumb }, 320, ease.out);
     check(run);
   }
 
-  async function phaseReach(run, mode, number) {
+  async function phaseReach(run) {
     check(run);
     setBanner('Reaching in', 'no peeking', '🤞');
     handLayer('stage');
     await stageRig.moveTo({ x: HAT.x, y: HAT.y - 300, rot: 0, curl: Hand.POSES.spread.curl.slice(), thumb: Hand.POSES.spread.thumb }, 600, ease.inOut);
     check(run);
     handLayer('inside');
-    Sfx.startShepard(); shepardOn = true; Sfx.shepardIntensity(0);
+    Sfx.startShepard(); Sfx.shepardIntensity(0);
     await stageRig.moveTo({ x: 0, y: -72, rot: 0, curl: Hand.POSES.open.curl.slice(), thumb: Hand.POSES.open.thumb }, 650, ease.inOut);
     check(run);
     Sfx.startRummage();
@@ -296,8 +334,7 @@
     Sfx.stopRummage();
     check(run);
     stageHat.settle();
-    const label = mode === 'number' ? '#' + number : '';
-    stageRig.hold('slip', { label });
+    stageRig.hold('slip', { label: '' });
     await stageRig.moveTo({ x: 0, y: -60, rot: 0, curl: Hand.POSES.pinch.curl.slice(), thumb: Hand.POSES.pinch.thumb }, 220, ease.out);
     check(run);
     setBanner('Got one', '', '📄');
@@ -333,66 +370,92 @@
     check(run);
   }
 
-  function drawSlip(mode, number) {
-    if (mode === 'number') return game.assignment[number - 1];
+  function drawSlip() {
     if (!game.pool.length) game.pool = shuffle(S.buildPool()); // only possible if every slip left said "again"
     const i = randInt(0, game.pool.length - 1);
     return game.pool.splice(i, 1)[0];
   }
 
-  async function phaseReveal(run, slip, mode) {
+  async function phaseReveal(run, slip) {
     check(run);
-    Sfx.stopShepard(); shepardOn = false;
+    Sfx.stopShepard();
     layerClock.setAttribute('opacity', '0');
     vignette.classList.remove('tense');
     screens.stage.classList.remove('tense');
-    // the slip in the hand pops open with the result
-    const label = slip.kind === 'money' ? formatMoney(slip.value) : slip.kind === 'wild' ? 'WILD!' : 'AGAIN!';
+    const label = slip.kind === 'money' ? formatMoney(slip.value) : slip.kind === 'wild' ? 'WILD!' : slip.kind === 'redraw' ? '+' + slip.n : 'AGAIN!';
     stageRig.hold('slip', { label });
     const held = stageRig.held.firstChild;
-    if (slip.kind === 'again') Sfx.boing(); else if (slip.kind === 'wild') Sfx.sparkle(); else Sfx.fanfare();
+    if (slip.kind === 'again') Sfx.boing(); else if (slip.kind === 'wild' || slip.kind === 'redraw') Sfx.sparkle(); else if (game.bonusLeft > 0) Sfx.pop(); else Sfx.fanfare();
     await tween(380, (t) => { held.setAttribute('transform', `translate(${Hand.SLIP.x},${Hand.SLIP.y}) rotate(${Hand.SLIP.rot}) scale(${(1 + 0.8 * t).toFixed(3)})`); }, ease.outBack);
     check(run);
-    setBanner(slip.kind === 'money' ? formatMoney(slip.value) : slip.kind === 'wild' ? 'Wild card' : 'Choose again', '');
+    setBanner(slip.kind === 'money' ? formatMoney(slip.value) : slip.kind === 'wild' ? 'Wild card' : slip.kind === 'redraw' ? 'Bonus!' : 'Choose again', '');
     await wait(420);
     check(run);
-    showResult(slip, mode);
+    showResult(slip);
   }
 
   /* ---------------- result overlay ---------------- */
-  function showResult(slip, mode) {
+  function showResult(slip) {
     const bgSetting = S.get().background;
     const bg = bgSetting === 'random' ? pick(S.BACKGROUNDS) : bgSetting;
+    const party = S.isParty(), end = party ? '!' : '.';
     result.hidden = false;
     result.className = 'result';
     const card = $('#result-card'), againBlock = $('#result-again'), replay = $('#btn-replay'), amount = $('#result-amount');
+    const keep = $('#btn-keep'), draw = $('#btn-draw'), kicker = $('#result-kicker'), sub = $('#result-sub');
+    card.hidden = false; againBlock.hidden = true; keep.hidden = true; draw.hidden = true; replay.hidden = false;
+    $('#flash').classList.remove('go'); // the white flash belongs to the win reveal only (showing the overlay restarts its animation)
+    replay.className = 'ee-btn ee-btn--primary ee-btn--block ee-btn--lg';
+    draw.className = 'ee-btn ee-btn--primary ee-btn--block ee-btn--lg';
+    const left = game ? game.bonusLeft : 0;
+
     if (slip.kind === 'again') {
       // the ember banner is the one call to action here, so "play again" steps down to outline
       card.hidden = true; againBlock.hidden = false;
       replay.className = 'ee-btn ee-btn--outline ee-btn--block ee-btn--lg';
-      $('#btn-again').textContent = mode === 'number' ? 'Pick another number' : 'Draw again';
-      const end = S.isParty() ? '!' : '.';
-      $('#again-sub').textContent = mode === 'number' ? `Not that one. Pick another number${end}` : `Not that one. Back into the hat${end}`;
+      $('#btn-again').textContent = 'Draw again';
+      $('#again-sub').textContent = `Not that one. Back into the hat${end}`;
       result.classList.add('again');
       return;
     }
-    card.hidden = false; againBlock.hidden = true;
-    replay.className = 'ee-btn ee-btn--primary ee-btn--block ee-btn--lg';
-    if (slip.kind === 'money') {
-      $('#result-kicker').textContent = 'We got a winner!';
+    if (slip.kind === 'redraw') {
+      kicker.textContent = 'Bonus slip!';
+      amount.textContent = '+' + slip.n;
+      amount.className = 'result-amount is-number';
+      sub.textContent = `${plural(slip.n, 'extra draw')}${left > slip.n ? `, ${left} in total` : ''}. Keep any amount you like or draw again. The last draw is final${end}`;
+      $('#btn-draw-text').textContent = 'Draw';
+      draw.hidden = false;
+      replay.className = 'ee-btn ee-btn--outline ee-btn--block ee-btn--lg';
+      result.classList.add('bonus');
+      return;
+    }
+    if (slip.kind === 'money' && left > 0) {
+      kicker.textContent = 'You drew';
       amount.textContent = formatMoney(slip.value);
       amount.className = 'result-amount is-number';
-      $('#result-sub').textContent = S.isParty() ? "That's the tip. Thank you, Dasher! 🙌" : "That's the tip. Thank you, Dasher.";
+      sub.textContent = `Keep it, or draw again? ${plural(left, 'draw')} left. The last draw is final${end}`;
+      $('#btn-keep-text').textContent = `Keep ${formatMoney(slip.value)}`;
+      $('#btn-draw-text').textContent = `Draw again (${left} left)`;
+      keep.hidden = false; draw.hidden = false; replay.hidden = true;
+      draw.className = 'ee-btn ee-btn--outline ee-btn--block ee-btn--lg';
+      result.classList.add('decide');
+      return;
+    }
+    if (slip.kind === 'money') {
+      kicker.textContent = 'We got a winner!';
+      amount.textContent = formatMoney(slip.value);
+      amount.className = 'result-amount is-number';
+      sub.textContent = party ? "That's the tip. Thank you, Dasher! 🙌" : "That's the tip. Thank you, Dasher.";
     } else {
-      $('#result-kicker').textContent = 'Wild card';
-      amount.textContent = S.isParty() ? '🃏' : 'Wild';
+      kicker.textContent = 'Wild card';
+      amount.textContent = party ? '🃏' : 'Wild';
       amount.className = 'result-amount is-word';
-      $('#result-sub').textContent = S.isParty() ? "Dasher's choice. Name your tip!" : "Dasher's choice. Name your tip.";
+      sub.textContent = `Dasher's choice. Name your tip${end}`;
     }
     result.classList.add('win', 'bg-' + bg);
     Celebrate.start(canvas, bg, S.get().skin);
     if (bg === 'crowd') Sfx.crowdRoar(5);
-    $('#flash').classList.remove('go'); void $('#flash').offsetWidth; $('#flash').classList.add('go');
+    void $('#flash').offsetWidth; $('#flash').classList.add('go');
     card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
   }
   function hideResult() {
@@ -403,7 +466,7 @@
 
   /* ---------------- rounds ---------------- */
   function resetStage() {
-    Sfx.stopShepard(); Sfx.stopRummage(); shepardOn = false;
+    Sfx.stopShepard(); Sfx.stopRummage();
     if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
     layerClock.setAttribute('opacity', '0');
     vignette.classList.remove('tense');
@@ -417,25 +480,26 @@
     stageRig.setPose({ x: 330, y: -420, rot: 0, scale: 1, curl: Hand.POSES.open.curl.slice(), thumb: Hand.POSES.open.thumb });
   }
 
-  function newGame(mode) {
+  function newGame() {
     const pool = S.buildPool();
-    game = { mode, pool: shuffle(pool), assignment: shuffle(pool), used: new Set(), picked: null, total: pool.length };
+    game = { pool: shuffle(pool), bonusLeft: 0, lastSlip: null, total: pool.length };
   }
 
   async function runRound(opts) {
     const run = ++runId;
     try {
       showScreen('stage');
-      if (opts.fresh) { resetStage(); stageHat.clearSlips(); }
-      else resetStage();
+      resetStage();
+      if (opts.fresh) stageHat.clearSlips();
       await wait(150);
-      if (opts.fresh) await phaseWriting(run, game.mode);
+      if (opts.fresh) await phaseWriting(run);
       await phaseShake(run, !opts.fresh);
-      await phaseReach(run, game.mode, game.picked);
+      await phaseReach(run);
       await phaseSuspense(run);
-      const slip = drawSlip(game.mode, game.picked);
-      if (game.mode === 'number') game.used.add(game.picked);
-      await phaseReveal(run, slip, game.mode);
+      const slip = drawSlip();
+      game.lastSlip = slip;
+      if (slip.kind === 'redraw') game.bonusLeft += slip.n;
+      await phaseReveal(run, slip);
     } catch (e) {
       if (!(e instanceof Cancelled)) { console.error(e); abort(); }
     }
@@ -445,32 +509,6 @@
     hideResult();
     resetStage();
     showScreen('home');
-  }
-
-  /* ---------------- pick a number ---------------- */
-  function renderGrid() {
-    const grid = $('#number-grid');
-    grid.innerHTML = '';
-    const N = game.total;
-    game.picked = null;
-    $('#picked-display').textContent = '?';
-    $('#btn-lock').disabled = true;
-    for (let n = 1; n <= N; n++) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'tile'; b.textContent = n; b.dataset.n = n;
-      b.style.setProperty('--hue', String((n * 47) % 360));
-      if (game.used.has(n)) { b.classList.add('used'); b.disabled = true; }
-      b.addEventListener('click', () => {
-        Sfx.unlock(); Sfx.tap();
-        $$('.tile.sel').forEach((t) => t.classList.remove('sel'));
-        b.classList.add('sel');
-        game.picked = n;
-        const d = $('#picked-display');
-        d.textContent = n; d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop');
-        $('#btn-lock').disabled = false;
-      });
-      grid.appendChild(b);
-    }
   }
 
   /* ---------------- settings drawer ---------------- */
@@ -510,11 +548,12 @@
       const c = document.createElement('button');
       c.type = 'button'; c.className = 'ee-badge chip'; c.setAttribute('aria-label', `Remove ${formatMoney(v)}`);
       c.innerHTML = `${formatMoney(v)}<svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>`;
-      c.addEventListener('click', () => { S.setAmounts(s.amounts.filter((x) => x !== v)); renderSettings(); updateSummary(); Sfx.tap(); checkEgg(); });
+      c.addEventListener('click', () => { S.setAmounts(s.amounts.filter((x) => x !== v)); renderSettings(); updateHomeText(); Sfx.tap(); checkEgg(); });
       chips.appendChild(c);
     }
     $('#set-again').value = s.chooseAgain;
     $('#set-wild').value = s.wild;
+    $('#set-bonus').value = s.bonus;
     $('#set-bg').value = s.background;
     $('#set-sound').checked = s.sound;
   }
@@ -542,14 +581,15 @@
       field.classList.remove('ee-field--error'); err.hidden = true;
       S.setAmounts(S.get().amounts.concat([v]));
       inp.value = '';
-      renderSettings(); updateSummary(); Sfx.pop();
+      renderSettings(); updateHomeText(); Sfx.pop();
       checkEgg();
     };
     $('#btn-add-amount').addEventListener('click', addAmount);
     $('#amount-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addAmount(); } });
-    $('#set-again').addEventListener('change', (e) => { S.set({ chooseAgain: clamp(parseInt(e.target.value, 10) || 0, 0, 50) }); renderSettings(); updateSummary(); });
-    $('#set-wild').addEventListener('change', (e) => { S.set({ wild: clamp(parseInt(e.target.value, 10) || 0, 0, 50) }); renderSettings(); updateSummary(); });
-    $('#btn-reset-amounts').addEventListener('click', () => { S.resetAmounts(); renderSettings(); updateSummary(); Sfx.pop(); });
+    $('#set-again').addEventListener('change', (e) => { S.set({ chooseAgain: clamp(parseInt(e.target.value, 10) || 0, 0, 50) }); renderSettings(); updateHomeText(); });
+    $('#set-wild').addEventListener('change', (e) => { S.set({ wild: clamp(parseInt(e.target.value, 10) || 0, 0, 50) }); renderSettings(); updateHomeText(); });
+    $('#set-bonus').addEventListener('change', (e) => { S.set({ bonus: clamp(parseInt(e.target.value, 10) || 0, 0, 5) }); renderSettings(); updateHomeText(); });
+    $('#btn-reset-amounts').addEventListener('click', () => { S.resetAmounts(); renderSettings(); updateHomeText(); Sfx.pop(); });
     $('#set-bg').addEventListener('change', (e) => { S.set({ background: e.target.value }); Sfx.tap(); });
     $('#set-sound').addEventListener('change', (e) => { S.set({ sound: e.target.checked }); Sfx.setEnabled(e.target.checked); if (e.target.checked) { Sfx.unlock(); Sfx.pop(); } });
   }
@@ -568,9 +608,8 @@
     box.innerHTML = '';
     box.hidden = false;
     const colors = ['#ff2d95', '#ffe600', '#00e5ff', '#7cff3e', '#ff7a00', '#b14cff', '#ff3b30', '#1de9b6', '#ff6ec7', '#2d7dff'];
-    const n = 34;
     let longest = 0;
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < 34; i++) {
       const b = document.createElement('div');
       b.className = 'balloon';
       const dur = rand(3.8, 6.0) * U.SPEED, delay = rand(0, 2.2) * U.SPEED;
@@ -597,40 +636,31 @@
   }
 
   /* ---------------- buttons ---------------- */
+  let starting = false;
   function wireButtons() {
-    $('#btn-mode-value').addEventListener('click', () => {
-      Sfx.unlock(); Sfx.pop();
-      newGame('value');
-      runRound({ fresh: true });
-    });
-    $('#btn-mode-number').addEventListener('click', () => {
-      Sfx.unlock(); Sfx.pop();
-      newGame('number');
-      renderGrid();
-      showScreen('pick');
-    });
-    $('#btn-lock').addEventListener('click', () => {
-      if (!game || !game.picked) return;
-      Sfx.unlock(); Sfx.swoosh();
-      runRound({ fresh: game.used.size === 0 });
+    $('#btn-draw-tip').addEventListener('click', () => {
+      if (starting) return;
+      starting = true;
+      Sfx.unlock(); Sfx.twinkle();
+      starBurst();
+      newGame();
+      setTimeout(() => { starting = false; runRound({ fresh: true }); }, ms(520));
     });
     $('#btn-abort').addEventListener('click', () => { Sfx.tap(); abort(); });
     $('#btn-home').addEventListener('click', () => { Sfx.tap(); abort(); });
     $('#btn-replay').addEventListener('click', () => { Sfx.pop(); abort(); });
-    $('#btn-again').addEventListener('click', (e) => {
-      e.preventDefault();
-      Sfx.pop();
-      hideResult();
-      if (game.mode === 'number') { renderGrid(); showScreen('pick'); }
-      else runRound({ fresh: false });
-    });
+    $('#btn-again').addEventListener('click', (e) => { e.preventDefault(); Sfx.pop(); hideResult(); runRound({ fresh: false }); });
+    // a bonus draw: one of the extra draws is spent, the hand goes back in
+    $('#btn-draw').addEventListener('click', () => { Sfx.pop(); hideResult(); if (game.bonusLeft > 0) game.bonusLeft--; runRound({ fresh: false }); });
+    // keep the amount on the table
+    $('#btn-keep').addEventListener('click', () => { Sfx.pop(); game.bonusLeft = 0; showResult(game.lastSlip); });
   }
 
   /* ---------------- boot ---------------- */
   function boot() {
     Sfx.setEnabled(S.get().sound);
-    buildPreview(); buildMini(); buildStage();
-    renderSettings(); updateSummary();
+    buildPreview(); buildMini(); buildStage(); buildStars();
+    renderSettings(); updateHomeText();
     wireSettings(); wireButtons();
     showScreen('home');
     if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
