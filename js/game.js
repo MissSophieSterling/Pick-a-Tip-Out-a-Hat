@@ -14,7 +14,7 @@
   const HAT = { x: 185, y: 445 };
 
   /* ---------------- state ---------------- */
-  let look = Hand.randomLook(S.get().setSkin ? S.skinHex() : null);
+  let look = Hand.makeLook(S.get().setSkin ? S.skinHex() : null, S.get().hand, null);
   let stageRig = null, previewRig = null, miniRig = null, stageHat = null, previewHat = null;
   let runId = 0;              // bump to cancel an in-flight round
   let game = null;            // { pool, bonusLeft, lastSlip, total }
@@ -536,7 +536,7 @@
     for (const t of S.SKIN_TONES) {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'swatch' + (t.id === s.skinTone ? ' active' : ''); b.style.background = t.hex; b.title = t.id; b.setAttribute('aria-label', t.id);
-      b.addEventListener('click', () => { S.set({ skinTone: t.id }); look.skin = t.hex; rebuildHands(); renderSettings(); Sfx.tap(); });
+      b.addEventListener('click', () => { S.set({ skinTone: t.id }); look = Hand.makeLook(t.hex, S.get().hand, look); rebuildHands(); renderSettings(); Sfx.tap(); });
       sw.appendChild(b);
     }
     const hatSel = $('#set-hat');
@@ -551,11 +551,34 @@
       c.addEventListener('click', () => { S.setAmounts(s.amounts.filter((x) => x !== v)); renderSettings(); updateHomeText(); Sfx.tap(); checkEgg(); });
       chips.appendChild(c);
     }
+    renderHandPrefs();
     $('#set-again').value = s.chooseAgain;
     $('#set-wild').value = s.wild;
     $('#set-bonus').value = s.bonus;
     $('#set-bg').value = s.background;
     $('#set-sound').checked = s.sound;
+  }
+  /** The accessory pickers: one select per part, each with a Random option. */
+  function renderHandPrefs() {
+    const grid = $('#hand-prefs');
+    const prefs = Object.assign({}, Hand.DEFAULT_PREFS, S.get().hand);
+    if (!grid.childElementCount) {
+      for (const key of Object.keys(Hand.OPTIONS)) {
+        const field = document.createElement('div');
+        field.className = 'ee-field';
+        const id = 'pref-' + key;
+        field.innerHTML = `<label for="${id}">${Hand.LABELS[key]}</label><div class="select-wrap"><select id="${id}" class="ee-input" data-pref="${key}"></select><svg class="icon"><use href="#i-chevron"/></svg></div>`;
+        const sel = field.querySelector('select');
+        for (const [value, label] of Hand.OPTIONS[key]) { const o = document.createElement('option'); o.value = value; o.textContent = label; sel.appendChild(o); }
+        sel.addEventListener('change', () => {
+          S.setHandPref(key, sel.value);
+          look = Hand.makeLook(S.get().setSkin ? S.skinHex() : look.skin, S.get().hand, look);
+          rebuildHands(); Sfx.tap();
+        });
+        grid.appendChild(field);
+      }
+    }
+    for (const sel of grid.querySelectorAll('select')) sel.value = prefs[sel.dataset.pref] || 'random';
   }
   function wireSettings() {
     $('#btn-menu').addEventListener('click', () => { Sfx.unlock(); renderSettings(); openDrawer(); });
@@ -565,11 +588,11 @@
     $$('.skin-btn').forEach((b) => b.addEventListener('click', () => { S.set({ skin: b.dataset.skinChoice }); S.applyTheme(); renderSettings(); Sfx.tap(); }));
     $('#set-skin-toggle').addEventListener('change', (e) => {
       S.set({ setSkin: e.target.checked });
-      look.skin = e.target.checked ? S.skinHex() : pick(S.SKIN_TONES).hex;
+      look = Hand.makeLook(e.target.checked ? S.skinHex() : pick(S.SKIN_TONES).hex, S.get().hand, look);
       rebuildHands(); renderSettings();
     });
     $('#btn-reroll-hand').addEventListener('click', () => {
-      look = Hand.randomLook(S.get().setSkin ? S.skinHex() : null);
+      look = Hand.makeLook(S.get().setSkin ? S.skinHex() : null, S.get().hand, null);
       rebuildHands(); Sfx.pop();
       const m = $('.hand-mini'); m.classList.remove('spin'); void m.offsetWidth; m.classList.add('spin');
     });

@@ -1,5 +1,5 @@
 /* Offline cache for the app shell. Bump CACHE when files change. */
-const CACHE = 'tiphat-v4';
+const CACHE = 'tiphat-v5';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './css/tokens.css', './css/ember-espresso.css', './css/app.css', './css/party.css',

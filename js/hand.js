@@ -118,63 +118,112 @@
   const HAND_TATTOOS = Object.keys(TATTOOS);
   const ARM_TATTOOS = HAND_TATTOOS.concat(['tribal', 'tribal']);
 
-  /* ---------- random look ---------- */
-  function randomLook(skinHex) {
-    const skin = skinHex || pick(Settings.SKIN_TONES).hex;
-    const look = { skin, rings: [], bracelets: [], watch: null, tattoo: null, nails: null, knuckles: null, freckles: chance(0.2) };
+  /* ---------- look generation ---------- */
+  const POLISH_NAMES = {
+    red: '#ff3b30', hotpink: '#ff6ec7', coral: '#ff2d55', purple: '#b14cff', skyblue: '#00c2ff', teal: '#1de9b6',
+    yellow: '#ffd60a', orange: '#ff7a00', black: '#15151a', white: '#f8f8ff', wine: '#8e0038', aqua: '#0bd3ff',
+  };
+  const WATCH_STYLES = ['classic', 'sport', 'smart', 'metal'];
+  const BRACELET_KINDS = ['beads', 'chain', 'cord', 'bangle', 'scrunchie'];
+  const DEFAULT_PREFS = { rings: 'random', ringMetal: 'random', watch: 'random', bracelets: 'random', braceletKind: 'random', tattoo: 'random', tattooWhere: 'random', nails: 'random', knuckles: 'random', freckles: 'random' };
+  const isRandom = (v) => v === undefined || v === null || v === 'random';
+
+  function makeWatch(style) {
+    return {
+      style,
+      metal: pick(['gold', 'silver', 'rose', 'black']),
+      band: style === 'metal' ? 'links' : style === 'smart' ? pick(['silicone', 'nylon']) : style === 'sport' ? 'silicone' : pick(['leather', 'leather', 'nylon']),
+      bandColor: pick(['#5a3a22', '#1d1d22', '#d84a6a', '#2d7dff', '#1fbf75', '#ff8a1f', '#7a3bd9', '#f2f2f2', '#0bd3ff']),
+      face: pick(['#ffffff', '#101014', '#1b3f8f', '#0f5e3c', '#fff4d6']),
+      hour: randInt(0, 11), minute: randInt(0, 59),
+    };
+  }
+  function makeBracelet(kind) {
+    return { kind, metal: pick(['gold', 'silver', 'rose']), theme: pick(BEAD_THEMES), colors: [pick(POLISH), pick(POLISH)], charm: chance(0.4) };
+  }
+
+  /** Build a look. `prefs` fixes any accessory ("random" leaves it to chance); `base` keeps the parts
+      that are still random from an existing look, so changing one setting does not re-roll the rest. */
+  function makeLook(skinHex, prefs, base) {
+    const P = Object.assign({}, DEFAULT_PREFS, prefs || {});
+    const skin = skinHex || (base ? base.skin : pick(Settings.SKIN_TONES).hex);
+    const look = { skin, rings: [], bracelets: [], watch: null, tattoo: null, nails: null, knuckles: null, freckles: false };
 
     // nails
-    look.nails = chance(0.55) ? { kind: 'natural' } : { kind: 'polish', color: pick(POLISH), glitter: chance(0.3) };
+    if (isRandom(P.nails) && base) look.nails = base.nails;
+    else if (isRandom(P.nails)) look.nails = chance(0.55) ? { kind: 'natural' } : { kind: 'polish', color: pick(POLISH), glitter: chance(0.3) };
+    else if (P.nails === 'natural') look.nails = { kind: 'natural' };
+    else look.nails = { kind: 'polish', color: POLISH_NAMES[P.nails] || pick(POLISH), glitter: chance(0.3) };
 
     // rings: "randomly 1 or more of the same" - stacking allowed
-    const ringRoll = Math.random();
-    const ringCount = ringRoll < 0.28 ? 0 : ringRoll < 0.62 ? 1 : ringRoll < 0.84 ? 2 : ringRoll < 0.95 ? 3 : 4;
-    const perFinger = {};
-    for (let i = 0; i < ringCount; i++) {
-      const finger = chance(0.1) ? 4 : randInt(0, 3); // 4 = thumb
-      const stack = perFinger[finger] || 0;
-      if (stack >= 2) continue;
-      perFinger[finger] = stack + 1;
-      look.rings.push({ finger, stack, metal: pick(Object.keys(METALS)), gem: chance(0.45) ? pick(GEMS) : null, wide: chance(0.3) });
+    let ringCount;
+    if (!isRandom(P.rings)) ringCount = parseInt(P.rings, 10) || 0;
+    else if (base) ringCount = base.rings.length;
+    else { const r = Math.random(); ringCount = r < 0.28 ? 0 : r < 0.62 ? 1 : r < 0.84 ? 2 : r < 0.95 ? 3 : 4; }
+    if (base && base.rings.length === ringCount) {
+      // same rings, same fingers; only swap the metal when one is chosen
+      look.rings = base.rings.map((r) => Object.assign({}, r, isRandom(P.ringMetal) ? {} : { metal: P.ringMetal }));
+    } else {
+      const count = ringCount;
+      const perFinger = {};
+      for (let i = 0; i < count; i++) {
+        const finger = chance(0.1) ? 4 : randInt(0, 3); // 4 = thumb
+        const stack = perFinger[finger] || 0;
+        if (stack >= 2) { i--; if (Object.keys(perFinger).length >= 5) break; continue; }
+        perFinger[finger] = stack + 1;
+        look.rings.push({ finger, stack, metal: isRandom(P.ringMetal) ? pick(Object.keys(METALS)) : P.ringMetal, gem: chance(0.45) ? pick(GEMS) : null, wide: chance(0.3) });
+      }
     }
 
     // watch
-    if (chance(0.5)) {
-      const style = pick(['classic', 'sport', 'smart', 'metal']);
-      look.watch = {
-        style,
-        metal: pick(['gold', 'silver', 'rose', 'black']),
-        band: style === 'metal' ? 'links' : style === 'smart' ? pick(['silicone', 'nylon']) : style === 'sport' ? 'silicone' : pick(['leather', 'leather', 'nylon']),
-        bandColor: pick(['#5a3a22', '#1d1d22', '#d84a6a', '#2d7dff', '#1fbf75', '#ff8a1f', '#7a3bd9', '#f2f2f2', '#0bd3ff']),
-        face: pick(['#ffffff', '#101014', '#1b3f8f', '#0f5e3c', '#fff4d6']),
-        hour: randInt(0, 11), minute: randInt(0, 59),
-      };
-    }
+    if (isRandom(P.watch) && base) look.watch = base.watch;
+    else if (isRandom(P.watch)) look.watch = chance(0.5) ? makeWatch(pick(WATCH_STYLES)) : null;
+    else if (P.watch === 'none') look.watch = null;
+    else look.watch = makeWatch(WATCH_STYLES.includes(P.watch) ? P.watch : pick(WATCH_STYLES));
 
     // bracelets (several of the same kind is fine)
-    const bRoll = Math.random();
-    const bCount = bRoll < 0.4 ? 0 : bRoll < 0.7 ? 1 : bRoll < 0.88 ? 2 : 3;
-    for (let i = 0; i < bCount; i++) {
-      const kind = pick(['beads', 'beads', 'chain', 'cord', 'bangle', 'scrunchie']);
-      look.bracelets.push({
-        kind,
-        metal: pick(['gold', 'silver', 'rose']),
-        theme: pick(BEAD_THEMES),
-        colors: [pick(POLISH), pick(POLISH)],
-        charm: chance(0.4),
-      });
+    if (isRandom(P.bracelets) && isRandom(P.braceletKind) && base) look.bracelets = base.bracelets;
+    else {
+      let count;
+      if (!isRandom(P.bracelets)) count = parseInt(P.bracelets, 10) || 0;
+      else if (base) count = base.bracelets.length;
+      else { const r = Math.random(); count = r < 0.4 ? 0 : r < 0.7 ? 1 : r < 0.88 ? 2 : 3; }
+      for (let i = 0; i < count; i++) look.bracelets.push(makeBracelet(isRandom(P.braceletKind) ? pick(['beads', 'beads', 'chain', 'cord', 'bangle', 'scrunchie']) : P.braceletKind));
     }
 
     // tattoo
-    if (chance(0.5)) {
-      const where = chance(0.55) ? 'hand' : 'arm';
-      const design = where === 'hand' ? pick(HAND_TATTOOS) : pick(ARM_TATTOOS);
-      look.tattoo = { where, design, ink: pick(INK), angle: rand(-14, 14) };
+    if (isRandom(P.tattoo) && isRandom(P.tattooWhere) && base) look.tattoo = base.tattoo;
+    else if (P.tattoo === 'none') look.tattoo = null;
+    else {
+      let design = null;
+      if (!isRandom(P.tattoo)) design = (P.tattoo === 'tribal' || TATTOOS[P.tattoo]) ? P.tattoo : pick(HAND_TATTOOS);
+      else if (base && base.tattoo) design = base.tattoo.design;
+      else if (chance(0.5)) design = pick(ARM_TATTOOS);
+      if (design) {
+        let where = isRandom(P.tattooWhere) ? (base && base.tattoo ? base.tattoo.where : (chance(0.55) ? 'hand' : 'arm')) : P.tattooWhere;
+        if (design === 'tribal' && where === 'hand') {
+          if (isRandom(P.tattoo)) design = pick(HAND_TATTOOS); // the band only fits the forearm
+          else where = 'arm';
+        }
+        const keep = base && base.tattoo && base.tattoo.design === design;
+        look.tattoo = { where, design, ink: keep ? base.tattoo.ink : pick(INK), angle: keep ? base.tattoo.angle : rand(-14, 14) };
+      }
     }
-    if (chance(0.12)) look.knuckles = { word: pick(KNUCKLE_WORDS), ink: pick(INK) };
+
+    // knuckle letters
+    if (isRandom(P.knuckles) && base) look.knuckles = base.knuckles;
+    else if (isRandom(P.knuckles)) look.knuckles = chance(0.12) ? { word: pick(KNUCKLE_WORDS), ink: pick(INK) } : null;
+    else if (P.knuckles === 'off') look.knuckles = null;
+    else look.knuckles = { word: (KNUCKLE_WORDS.includes(P.knuckles) ? P.knuckles : pick(KNUCKLE_WORDS)), ink: pick(INK) };
+
+    // freckles
+    if (isRandom(P.freckles) && base) look.freckles = base.freckles;
+    else if (isRandom(P.freckles)) look.freckles = chance(0.2);
+    else look.freckles = P.freckles === 'on';
 
     return look;
   }
+  function randomLook(skinHex, prefs) { return makeLook(skinHex, prefs, null); }
 
   /* ---------- geometry ---------- */
   const FINGERS = [ // left to right: pinky, ring, middle, index
@@ -452,5 +501,20 @@
     return rig;
   }
 
-  window.Hand = { randomLook, create, POSES, FINGERS, THUMB, PEN_TIP, SLIP };
+  window.Hand = {
+    randomLook, makeLook, create, POSES, FINGERS, THUMB, PEN_TIP, SLIP, DEFAULT_PREFS,
+    OPTIONS: {
+      rings: [['random', 'Random'], ['0', 'None'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']],
+      ringMetal: [['random', 'Random'], ['gold', 'Gold'], ['silver', 'Silver'], ['rose', 'Rose gold'], ['black', 'Black']],
+      watch: [['random', 'Random'], ['none', 'None'], ['classic', 'Classic'], ['sport', 'Sport'], ['smart', 'Smartwatch'], ['metal', 'Metal band']],
+      bracelets: [['random', 'Random'], ['0', 'None'], ['1', '1'], ['2', '2'], ['3', '3']],
+      braceletKind: [['random', 'Random'], ['beads', 'Beads'], ['chain', 'Chain'], ['cord', 'Cord'], ['bangle', 'Bangle'], ['scrunchie', 'Scrunchie']],
+      tattoo: [['random', 'Random'], ['none', 'None'], ['heart', 'Heart'], ['momHeart', 'MOM heart'], ['star', 'Star'], ['anchor', 'Anchor'], ['lightning', 'Lightning bolt'], ['flower', 'Flower'], ['skull', 'Skull'], ['butterfly', 'Butterfly'], ['moon', 'Moon and stars'], ['sun', 'Sun'], ['snake', 'Snake'], ['diamond', 'Diamond'], ['crown', 'Crown'], ['infinity', 'Infinity'], ['paw', 'Paw print'], ['rose', 'Rose'], ['arrow', 'Arrow'], ['initials', 'Initials'], ['smiley', 'Smiley'], ['tribal', 'Tribal band (forearm)']],
+      tattooWhere: [['random', 'Random'], ['hand', 'Back of hand'], ['arm', 'Forearm']],
+      nails: [['random', 'Random'], ['natural', 'Natural'], ['red', 'Red'], ['hotpink', 'Hot pink'], ['coral', 'Coral'], ['purple', 'Purple'], ['skyblue', 'Sky blue'], ['teal', 'Teal'], ['yellow', 'Yellow'], ['orange', 'Orange'], ['black', 'Black'], ['white', 'White'], ['wine', 'Wine'], ['aqua', 'Aqua']],
+      knuckles: [['random', 'Random'], ['off', 'Off'], ['LOVE', 'LOVE'], ['HOPE', 'HOPE'], ['LUCK', 'LUCK'], ['TIPS', 'TIPS'], ['GAME', 'GAME'], ['COOL', 'COOL'], ['LIFE', 'LIFE']],
+      freckles: [['random', 'Random'], ['off', 'Off'], ['on', 'On']],
+    },
+    LABELS: { rings: 'Rings', ringMetal: 'Ring metal', watch: 'Watch', bracelets: 'Bracelets', braceletKind: 'Bracelet style', tattoo: 'Tattoo', tattooWhere: 'Tattoo spot', nails: 'Nails', knuckles: 'Knuckle letters', freckles: 'Freckles' },
+  };
 })();
