@@ -114,6 +114,7 @@
   <div id="result" class="result" hidden>
     <canvas id="celebration"></canvas>
     <div class="flash" id="flash"></div>
+    <canvas id="crackers" class="crackers"></canvas>
     <div class="result-inner">
       <div class="result-card" id="result-card">
         <div class="t-title" id="result-kicker">We got a winner!</div>
@@ -128,7 +129,12 @@
       <div class="result-actions">
         <button id="btn-keep" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button" hidden><span class="emoji party-only">🙌</span><span id="btn-keep-text">Keep it</span><svg class="icon ember-only"><use href="#i-lock"/></svg></button>
         <button id="btn-draw" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button" hidden><span class="emoji party-only">🎩</span><span id="btn-draw-text">Draw</span><svg class="icon ember-only"><use href="#i-refresh"/></svg></button>
-        <button id="btn-replay" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🎉</span><span>Play again</span><svg class="icon ember-only"><use href="#i-play"/></svg></button>
+        <button id="btn-replay" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="button"><span class="emoji party-only">🎉</span><span>Another delivery</span><svg class="icon ember-only"><use href="#i-play"/></svg></button>
+      </div>
+      <div class="thanks-stack" id="thanks-stack" hidden>
+        <span class="thanks-layer l3" aria-hidden="true">Thank you<br>for your<br>service!</span>
+        <span class="thanks-layer l2" aria-hidden="true">Thank you<br>for your<br>service!</span>
+        <span class="thanks-layer l1">Thank you<br>for your<br>service!</span>
       </div>
     </div>
   </div>
@@ -252,6 +258,7 @@
   <script src="js/hat.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/celebrate.js"></script>
+  <script src="js/crackers.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

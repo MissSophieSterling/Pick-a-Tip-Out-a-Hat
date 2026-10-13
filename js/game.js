@@ -10,7 +10,7 @@
   const hatGroup = $('#hat-group'), slotInside = $('#hand-slot-inside'), slotFront = $('#hand-slot-front');
   const bannerText = $('#banner-text'), bannerSub = $('#banner-sub');
   const vignette = $('#vignette');
-  const result = $('#result'), resultCard = $('#result-card'), canvas = $('#celebration');
+  const result = $('#result'), resultCard = $('#result-card'), canvas = $('#celebration'), crackers = $('#crackers');
   const HAT = { x: 185, y: 445 };
 
   /* ---------------- state ---------------- */
@@ -395,7 +395,34 @@
   }
 
   /* ---------------- result overlay ---------------- */
+  /* ---------- win sign-off ----------
+     The layered "thank you" squeezes and stretches for a moment, rests while firecrackers shoot up from
+     behind the card, then goes again. A few loops, then it stays put. */
+  const thanks = { timers: [] };
+  function stopThanks() {
+    thanks.timers.forEach(clearTimeout); thanks.timers = [];
+    const stack = $('#thanks-stack');
+    stack.classList.remove('accordion'); stack.hidden = true;
+    Crackers.stop();
+  }
+  function startThanks(loops) {
+    stopThanks();
+    const stack = $('#thanks-stack');
+    stack.hidden = false;
+    const later = (fn, t) => thanks.timers.push(setTimeout(fn, t));
+    const cycle = (n) => {
+      stack.classList.remove('accordion'); void stack.offsetWidth; stack.classList.add('accordion');
+      later(() => {
+        stack.classList.remove('accordion');
+        Crackers.fire(crackers, resultCard.getBoundingClientRect(), S.get().skin);
+        later(() => { if (n + 1 < loops) cycle(n + 1); }, 2600);
+      }, 2100); // three squeezes at .7 s
+    };
+    later(() => cycle(0), 350);
+  }
+
   function showResult(slip) {
+    stopThanks();
     const bgSetting = S.get().background;
     const bg = bgSetting === 'random' ? pick(S.BACKGROUNDS) : bgSetting;
     const party = S.isParty(), end = party ? '!' : '.';
@@ -454,11 +481,13 @@
     }
     result.classList.add('win', 'bg-' + bg);
     Celebrate.start(canvas, bg, S.get().skin);
+    startThanks(3);
     if (bg === 'crowd') Sfx.crowdRoar(5);
     void $('#flash').offsetWidth; $('#flash').classList.add('go');
     card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
   }
   function hideResult() {
+    stopThanks();
     Celebrate.stop();
     result.hidden = true;
     result.className = 'result';

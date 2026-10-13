@@ -131,6 +131,10 @@ html[data-skin="party"] .again-block .ee-banner { border-radius: 22px; border: 3
   background: linear-gradient(180deg, #fff39a, #ffcf1b 60%, #ff9a00); color: #4a2b00; font: 700 22px/1.1 var(--font-sans); text-transform: none; text-shadow: 0 1px 0 rgba(255,255,255,0.5);
   box-shadow: 0 10px 0 rgba(0,0,0,0.18), 0 16px 30px rgba(0,0,0,0.22), inset 0 -6px 0 rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,0.5); }
 html[data-skin="party"] .again-block .ee-banner a { color: inherit; }
+html[data-skin="party"] .thanks-layer { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.03em; }
+html[data-skin="party"] .thanks-layer.l1 { color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
+html[data-skin="party"] .thanks-layer.l2 { color: var(--yellow); }
+html[data-skin="party"] .thanks-layer.l3 { color: var(--red); }
 html[data-skin="party"] #btn-replay { background: linear-gradient(180deg, #ff6ec7, #ff2d95 60%, #e0157a); color: #fff; border-color: rgba(255,255,255,0.75); }
 
 /* ---------- drawer ---------- */

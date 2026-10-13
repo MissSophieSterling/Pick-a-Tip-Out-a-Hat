@@ -14,6 +14,8 @@ It is a web app that installs to a phone's home screen (a PWA), so there is noth
 
 Tap **Draw a tip**. The hand writes the amounts on slips, tosses them in the cap, shakes it for a random stretch, reaches in and pulls one out. The slip is held for a random, anxious moment while the clock ticks, then it is revealed.
 
+On a win the screen signs off with a layered **THANK YOU FOR YOUR SERVICE!** that squeezes and stretches, holds still while firecrackers shoot up from behind the tip, and goes again a few times. The button under it starts another delivery.
+
 Besides the dollar slips the hat holds a **Wild Card** (the Dasher names the tip), **blank slips** that send the hand back in, and **bonus slips** worth 1 to 5 extra draws. After a bonus slip the Dasher can keep any amount that comes up or draw again; the last draw is final, even if it is smaller.
 
 ### Default amounts
