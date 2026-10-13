@@ -151,12 +151,12 @@
   function updateHomeText() {
     const s = S.get();
     const min = formatMoney(Math.min(...s.amounts)), max = formatMoney(Math.max(...s.amounts));
-    $('#hat-text').textContent = `Slips run from ${min} to ${max}, skipping a few unlucky numbers. Low amounts sit close together; higher ones jump by fives, then by tens.`;
+    $('#hat-text').textContent = `${s.amounts.length} amounts, ${min} to ${max}. Which one comes up leans on what the order cost.`;
     const extras = [];
     if (s.wild) extras.push(`${plural(s.wild, 'wild card')} where you name the tip`);
     if (s.chooseAgain) extras.push(`${plural(s.chooseAgain, 'blank slip')} that send you back in`);
     if (s.bonus) extras.push(`${plural(s.bonus, 'bonus slip')} worth 1 to ${s.bonus} extra draws`);
-    let odds = 'One draw, with a real shot at a big tip. It can come up low too; that is the game, not your performance.';
+    let odds = 'Type in what the food cost, then draw. About 4 draws in 5 land between 10% and 20% of it; the rest are long shots, and the big ones over 20% are rare. It can still come up low. That is the game, not your performance.';
     if (extras.length) odds += ` Also in the hat: ${extras.join(', ')}.`;
     if (s.bonus) odds += ' Keep any amount you like or draw again; the last draw is final, even if it is smaller.';
     $('#odds-text').textContent = odds;
@@ -225,7 +225,7 @@
   }
 
   async function phaseWriting(run) {
-    const pool = game.pool;
+    const pool = game.display; // what gets written and tossed in; the result itself was chosen before the round started
     const N = pool.length;
     handLayer('stage');
     stageRig.hold('pen');
@@ -370,10 +370,15 @@
     check(run);
   }
 
+  /** One slip out of the hat. The special slips (wild, blank, bonus) each take one slot beside the money slips and
+      leave the hat once drawn. A money slip's amount comes from the weighted draw against the order total. */
   function drawSlip() {
-    if (!game.pool.length) game.pool = shuffle(S.buildPool()); // only possible if every slip left said "again"
-    const i = randInt(0, game.pool.length - 1);
-    return game.pool.splice(i, 1)[0];
+    const amounts = S.get().amounts;
+    const specials = game.specials;
+    const slots = amounts.length + specials.length;
+    const u = TipMath.random();
+    if (specials.length && u * slots < specials.length) return specials.splice(Math.floor(u * slots), 1)[0];
+    return { kind: 'money', value: TipMath.select(game.orderCents, { amounts }) };
   }
 
   async function phaseReveal(run, slip) {
@@ -460,7 +465,7 @@
       kicker.textContent = 'You drew';
       amount.textContent = formatMoney(slip.value);
       amount.className = 'result-amount is-number';
-      sub.textContent = `Keep it, or draw again? ${plural(left, 'draw')} left. The last draw is final${end}`;
+      sub.textContent = `${pctOfOrder(slip.value)}% of the order. Keep it, or draw again? ${plural(left, 'draw')} left. The last draw is final${end}`;
       $('#btn-keep-text').textContent = `Keep ${formatMoney(slip.value)}`;
       $('#btn-draw-text').textContent = `Draw again (${left} left)`;
       keep.hidden = false; draw.hidden = false; replay.hidden = true;
@@ -472,7 +477,8 @@
       kicker.textContent = 'We got a winner!';
       amount.textContent = formatMoney(slip.value);
       amount.className = 'result-amount is-number';
-      sub.textContent = party ? "That's the tip. Thank you, Dasher! 🙌" : "That's the tip. Thank you, Dasher.";
+      const pct = pctOfOrder(slip.value);
+      sub.textContent = `That's the tip${pct === null ? '' : `: ${pct}% of the order`}. Thank you, Dasher${party ? '! 🙌' : '.'}`;
     } else {
       kicker.textContent = 'Wild card';
       amount.textContent = party ? '🃏' : 'Wild';
@@ -509,13 +515,23 @@
     stageRig.setPose({ x: 330, y: -420, rot: 0, scale: 1, curl: Hand.POSES.open.curl.slice(), thumb: Hand.POSES.open.thumb });
   }
 
-  function newGame() {
+  /** A new delivery: `orderCents` is what the food cost. The special slips go in the hat beside the money slips. */
+  function newGame(orderCents) {
     const pool = S.buildPool();
-    game = { pool: shuffle(pool), bonusLeft: 0, lastSlip: null, total: pool.length };
+    game = {
+      orderCents: Number.isInteger(orderCents) && orderCents > 0 ? orderCents : 5000, // test hooks may skip the receipt
+      specials: shuffle(pool.filter((s) => s.kind !== 'money')),
+      display: shuffle(pool),
+      bonusLeft: 0, lastSlip: null, total: pool.length,
+    };
   }
 
   async function runRound(opts) {
     const run = ++runId;
+    // The result is chosen here, once, before anything moves. The animation only shows it.
+    const slip = drawSlip();
+    game.lastSlip = slip;
+    if (slip.kind === 'redraw') game.bonusLeft += slip.n;
     try {
       showScreen('stage');
       resetStage();
@@ -525,9 +541,6 @@
       await phaseShake(run, !opts.fresh);
       await phaseReach(run);
       await phaseSuspense(run);
-      const slip = drawSlip();
-      game.lastSlip = slip;
-      if (slip.kind === 'redraw') game.bonusLeft += slip.n;
       await phaseReveal(run, slip);
     } catch (e) {
       if (!(e instanceof Cancelled)) { console.error(e); abort(); }
@@ -535,10 +548,44 @@
   }
   function abort() {
     runId++;
+    closeOrder();
     hideResult();
     resetStage();
     showScreen('home');
   }
+
+  /* ---------------- the order (receipt) ---------------- */
+  const order = $('#order'), orderInput = $('#order-input'), orderError = $('#order-error');
+  const RECEIPT_ITEMS = [['Spicy chicken sandwich', 2], ['Loaded fries', 1], ['Large lemonade', 2], ['Chocolate chip cookie', 1], ['Caesar salad', 1],
+    ['Pepperoni pizza', 1], ['Boba milk tea', 2], ['Garlic knots', 1], ['Pad thai', 1], ['Birria tacos', 3], ['Iced latte', 1], ['Double cheeseburger', 2], ['Onion rings', 1]];
+  function receiptEdge() {
+    // a sawtooth along the bottom of the paper
+    const teeth = 22, pts = ['0 0', '100% 0', '100% calc(100% - 8px)'];
+    for (let k = teeth; k > 0; k--) pts.push(`${((k - 0.5) / teeth * 100).toFixed(3)}% 100%`, `${((k - 1) / teeth * 100).toFixed(3)}% calc(100% - 8px)`);
+    $('#order-form').style.clipPath = `polygon(${pts.join(', ')})`;
+  }
+  function openOrder() {
+    // the stage waits behind the receipt, blurred
+    runId++;
+    showScreen('stage'); resetStage(); stageHat.clearSlips();
+    $('#receipt-no').textContent = `Order #${randInt(1000, 9999)}`;
+    const items = shuffle(RECEIPT_ITEMS.slice()).slice(0, 4);
+    $('#receipt-items').innerHTML = items.map(([name, qty]) => `<div class="receipt-row"><span>${qty} ${name}</span><span>${(rand(3, 19) * qty).toFixed(2)}</span></div>`).join('');
+    orderInput.value = ''; orderError.textContent = '';
+    order.hidden = false; order.classList.add('open');
+    setTimeout(() => orderInput.focus(), 60);
+  }
+  function closeOrder() { order.hidden = true; order.classList.remove('open'); }
+  function submitOrder() {
+    const parsed = TipMath.parseOrderTotal(orderInput.value);
+    if (parsed.error) { orderError.textContent = parsed.error; orderInput.focus(); Sfx.boing(); return false; }
+    Sfx.pop();
+    closeOrder();
+    startRound(parsed.cents);
+    return true;
+  }
+  function startRound(orderCents) { newGame(orderCents); runRound({ fresh: true }); }
+  function pctOfOrder(value) { return game && game.orderCents ? Math.round(value * 10000 / game.orderCents) : null; }
 
   /* ---------------- settings drawer ---------------- */
   const drawer = $('#drawer'), backdrop = $('#drawer-backdrop');
@@ -676,9 +723,12 @@
     Sfx.unlock(); Sfx.kidsYay();
     // the new look is revealed while the screen is full of balloons
     setTimeout(() => {
+      // the look switches, and the hat gets its amounts back: 7 and 11 were only the key
       S.set({ skin: 'party', eggFound: true });
+      S.setAmounts(S.DEFAULT_AMOUNTS);
       S.applyTheme();
       renderSettings();
+      updateHomeText();
       hideResult();
       runId++;
       resetStage();
@@ -695,12 +745,15 @@
       starting = true;
       Sfx.unlock(); Sfx.twinkle();
       starBurst();
-      newGame();
-      setTimeout(() => { starting = false; runRound({ fresh: true }); }, ms(520));
+      setTimeout(() => { starting = false; openOrder(); }, ms(520));
     });
     $('#btn-abort').addEventListener('click', () => { Sfx.tap(); abort(); });
     $('#btn-home').addEventListener('click', () => { Sfx.tap(); abort(); });
     $('#btn-replay').addEventListener('click', () => { Sfx.pop(); abort(); });
+    $('#order-form').addEventListener('submit', (e) => { e.preventDefault(); Sfx.unlock(); submitOrder(); });
+    orderInput.addEventListener('input', () => { orderError.textContent = ''; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !order.hidden) abort(); });
+    receiptEdge();
     $('#btn-again').addEventListener('click', (e) => { e.preventDefault(); Sfx.pop(); hideResult(); runRound({ fresh: false }); });
     // a bonus draw: one of the extra draws is spent, the hand goes back in
     $('#btn-draw').addEventListener('click', () => { Sfx.pop(); hideResult(); if (game.bonusLeft > 0) game.bonusLeft--; runRound({ fresh: false }); });
@@ -719,7 +772,7 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
     // expose a little for testing
-    window.TipHat = { get game() { return game; }, get look() { return look; }, runRound, newGame, showResult, hideResult, abort, runEgg };
+    window.TipHat = { get game() { return game; }, get look() { return look; }, runRound, newGame, startRound, drawSlip, openOrder, submitOrder, showResult, hideResult, abort, runEgg };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
