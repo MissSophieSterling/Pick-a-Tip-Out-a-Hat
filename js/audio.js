@@ -246,6 +246,11 @@
     },
     whistleUp() { tone({ freq: 400, freqEnd: 1800, type: 'sine', dur: 0.9, slide: 0.9, gain: 0.05, attack: 0.05 }); },
     crackle() { for (let i = 0; i < 6; i++) burst({ freq: 3000 + Math.random() * 3000, q: 3, dur: 0.03, gain: 0.08, delay: Math.random() * 0.4, attack: 0.002 }); },
+    /** One firecracker: a sharp snap with a little thump under it. */
+    crackerPop() {
+      burst({ freq: 2200 + Math.random() * 1800, q: 1.2, dur: 0.05, gain: 0.2, attack: 0.001 });
+      tone({ freq: 190, freqEnd: 70, type: 'square', dur: 0.06, gain: 0.07 });
+    },
   };
 
   window.Sfx = Audio;

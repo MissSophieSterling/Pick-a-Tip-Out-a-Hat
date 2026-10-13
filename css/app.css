@@ -116,6 +116,18 @@ a { color: var(--ember-text); }
 .again-block .ee-banner a { text-decoration: underline; }
 .banner-arrow { width: 44px; height: 28px; flex: none; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .result-actions { display: grid; gap: var(--space-3); }
+/* win sign-off: three copies of the line, each a touch bigger and higher than the one in front */
+.crackers { z-index: 1; pointer-events: none; }
+.thanks-stack { display: grid; justify-items: center; padding: 40px 0 var(--space-2); }
+.thanks-layer { grid-area: 1 / 1; font: 800 clamp(36px, 11vw, 50px)/0.95 var(--font-sans); text-transform: uppercase; text-align: center;
+  letter-spacing: 0.01em; white-space: nowrap; transform: translate(var(--ox), var(--oy)) scale(var(--sc)); will-change: transform; }
+.thanks-layer.l1 { --ox: 0px; --oy: 0px; --sc: 1; color: #F3EAE4; }
+.thanks-layer.l2 { --ox: -5px; --oy: -0.42em; --sc: 1.035; color: #F2B63B; }
+.thanks-layer.l3 { --ox: -10px; --oy: -0.84em; --sc: 1.07; color: var(--ember); }
+.thanks-stack.accordion .thanks-layer { animation: accordion .7s ease-in-out 3; }
+@keyframes accordion { 0%, 100% { transform: translate(var(--ox), var(--oy)) scale(var(--sc)); } 50% { transform: translate(0, 0) scale(var(--sc)); } }
+@media (prefers-reduced-motion: reduce) { .thanks-stack.accordion .thanks-layer { animation: none; } }
+@media (max-height: 720px) { .result.bg-crowd .result-inner { transform: translateY(-6vh); } }
 
 /* ---------- settings drawer ---------- */
 .drawer-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(17, 14, 11, 0.6); }
