@@ -110,6 +110,8 @@ html[data-skin="party"] .order { background: rgba(26, 11, 46, 0.62); }
 html[data-skin="party"] .receipt { --paper: #ffffff; --paper-ink: #2b1d3a; --paper-muted: rgba(43, 29, 58, 0.55); --paper-ember: #d4147a; }
 html[data-skin="party"] .receipt-rule { border-top-color: rgba(43, 29, 58, 0.35); }
 html[data-skin="party"] .receipt .ee-btn { font-family: var(--font-sans); }
+html[data-skin="party"] .order-next { background: linear-gradient(180deg, #ff6ec7, #ff2d95 60%, #e0157a); color: #fff; border: 3px solid rgba(255, 255, 255, 0.75); }
+html[data-skin="party"] .more-btn { color: var(--text-soft); font-weight: 700; }
 
 /* ---------- result ---------- */
 html[data-skin="party"] .result { background: #1a0b2e; }

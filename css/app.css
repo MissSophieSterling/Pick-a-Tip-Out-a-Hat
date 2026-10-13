@@ -70,6 +70,13 @@ a { color: var(--ember-text); }
 .spark { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; fill: var(--tone); filter: drop-shadow(0 0 4px var(--tone)); animation: sparkOut .7s ease-out forwards; }
 @keyframes sparkOut { from { transform: translate(0, 0) scale(0.3) rotate(0deg); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(1.3) rotate(140deg); opacity: 0; } }
 .intro { margin-top: var(--space-2); }
+.more-btn { display: inline-flex; align-items: center; gap: 2px; justify-self: start; padding: var(--space-1) 0; margin-top: calc(-1 * var(--space-2)); background: none; border: 0; cursor: pointer;
+  color: var(--ink-muted); font: 600 13px/20px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.more-btn:hover, .more-btn:focus-visible { color: var(--ink); outline: none; }
+.more-btn .icon { width: 18px; height: 18px; transform: rotate(-90deg); transition: transform .2s ease; }
+.more-btn[aria-expanded="true"] .icon { transform: rotate(0deg); }
+.home-more { display: grid; gap: var(--space-3); margin-top: calc(-1 * var(--space-2)); }
+.home-more.in { animation: screenIn .25s ease-out; }
 @media (min-width: 480px) { .draw-row { grid-template-columns: 1fr 1fr; align-items: center; } }
 .home-preview { width: 100%; max-width: 360px; margin: var(--space-4) auto; border-radius: var(--radius-xl); overflow: hidden;
   background: radial-gradient(circle at 60% 30%, var(--mocha), var(--surface-strong) 55%, var(--surface-raised)); }
@@ -97,7 +104,13 @@ a { color: var(--ember-text); }
 
 /* ---------- the order receipt (before the first draw) ---------- */
 .order { position: fixed; inset: 0; z-index: 58; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto;
-  padding: 72px var(--space-4) var(--space-8); background: rgba(17, 14, 11, 0.62); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  padding: 72px var(--space-4) 120px; background: rgba(17, 14, 11, 0.62); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* the down arrow: shows once an amount is typed and the Continue button sits below the fold (a phone keyboard usually hides it) */
+.order-next { position: fixed; right: 20px; bottom: 24px; z-index: 2; width: 52px; height: 52px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer;
+  background: var(--ember); color: #1A140F; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); animation: nudge 1.2s ease-in-out infinite; }
+.order-next .icon { width: 28px; height: 28px; }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+@media (prefers-reduced-motion: reduce) { .order-next { animation: none; } }
 .order.open { animation: screenIn .25s ease-out; }
 .order-inner { width: 100%; max-width: 400px; display: grid; gap: var(--space-4); }
 .order-head { text-align: center; display: grid; gap: var(--space-1); }
