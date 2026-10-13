@@ -187,6 +187,11 @@
       for (let i = 0; i < 9; i++) tone({ freq: scale[Math.min(scale.length - 1, i)], type: 'sine', dur: 0.35, gain: 0.14, delay: i * 0.07 });
       burst({ freq: 6000, type: 'highpass', dur: 0.9, gain: 0.07, attack: 0.2 });
     },
+    twinkle() {
+      if (!ready()) return;
+      [1568, 2093, 2637, 3136].forEach((f, i) => tone({ freq: f, type: 'sine', dur: 0.3, gain: 0.11, delay: i * 0.06 }));
+      burst({ freq: 7000, type: 'highpass', dur: 0.45, gain: 0.05, attack: 0.05 });
+    },
     boing() {
       tone({ freq: 520, freqEnd: 240, type: 'triangle', dur: 0.12, slide: 0.1, gain: 0.22 });
       tone({ freq: 240, freqEnd: 820, type: 'triangle', dur: 0.32, slide: 0.3, gain: 0.22, delay: 0.12 });
@@ -201,6 +206,39 @@
         tone({ freq: 1800 + Math.random() * 1400, freqEnd: 2600 + Math.random() * 1200, type: 'sine', dur: 0.35, gain: 0.03, delay: d });
       }
       for (let i = 0; i < 60; i++) burst({ freq: 2500 + Math.random() * 2000, q: 2, dur: 0.03, gain: 0.05, delay: Math.random() * dur, attack: 0.003 });
+    },
+    /** A small crowd of kids shouting "yaaay", with clapping. Synthesised: sawtooth voices through two sweeping formant filters. */
+    kidsYay() {
+      if (!ready()) return;
+      const t0 = now();
+      for (let v = 0; v < 8; v++) {
+        const f0 = 260 + Math.random() * 300;
+        const d = Math.random() * 0.14;
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f0 * 0.9, t0 + d);
+        osc.frequency.linearRampToValueAtTime(f0 * 1.25, t0 + d + 0.35);
+        osc.frequency.linearRampToValueAtTime(f0 * 1.05, t0 + d + 1.1);
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 5.5 + Math.random() * 1.5;
+        const lfoG = ctx.createGain();
+        lfoG.gain.value = f0 * 0.03;
+        lfo.connect(lfoG); lfoG.connect(osc.frequency);
+        const f1 = ctx.createBiquadFilter(); f1.type = 'bandpass'; f1.Q.value = 5;
+        f1.frequency.setValueAtTime(750, t0 + d); f1.frequency.linearRampToValueAtTime(450, t0 + d + 1.0);
+        const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.Q.value = 6;
+        f2.frequency.setValueAtTime(1300, t0 + d); f2.frequency.linearRampToValueAtTime(2300, t0 + d + 1.0);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0 + d);
+        g.gain.linearRampToValueAtTime(0.09, t0 + d + 0.08);
+        g.gain.setValueAtTime(0.09, t0 + d + 0.9);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 1.35);
+        osc.connect(f1); osc.connect(f2); f1.connect(g); f2.connect(g); g.connect(master);
+        lfo.start(t0 + d); lfo.stop(t0 + d + 1.4);
+        osc.start(t0 + d); osc.stop(t0 + d + 1.4);
+      }
+      burst({ freq: 1800, q: 0.6, dur: 1.8, gain: 0.12, attack: 0.3 });
+      for (let i = 0; i < 28; i++) burst({ freq: 2500 + Math.random() * 2000, q: 2, dur: 0.03, gain: 0.05, delay: 0.2 + Math.random() * 1.5, attack: 0.003 });
     },
     boom() {
       tone({ freq: 90, freqEnd: 35, type: 'sine', dur: 0.5, gain: 0.35, attack: 0.005 });

@@ -3,12 +3,36 @@
 (function () {
   'use strict';
   const { rand, randInt, pick, clamp, lerp } = U;
-  // Celebration colours come from the Ember & Espresso palette: ember, its tints, taupe, white, and the warning/positive accents.
-  const BRIGHT = ['#FF4514', '#FF6A3D', '#FFDCCF', '#C4B0A6', '#FFFFFF', '#E8B04A', '#5CC48A', '#FF4514'];
-  const SHIRTS = ['#FF4514', '#895946', '#8A3C20', '#C4B0A6', '#3D2C22', '#F3EAE4', '#E8B04A', '#5CC48A'];
-  const FIRE = ['#FF4514', '#FF6A3D', '#E8B04A', '#FFFFFF', '#C4B0A6', '#5CC48A', '#FFDCCF'];
   const SKINS = ['#FADCBC', '#F3C7A1', '#E8B590', '#D9A077', '#C68642', '#B07A4B', '#8D5524', '#6E4426', '#4E2E1E', '#3B2419'];
-  const HAIR = ['#1b1b1b', '#3b2a1a', '#6b3e1e', '#c98b3a', '#e8d49a', '#8a1c1c', '#C4B0A6'];
+  // Two palettes: the Ember & Espresso one (ember, its tints, taupe, white, the gold and green accents on warm grounds)
+  // and the party one from the app's first look (neon everything).
+  const PALETTES = {
+    ember: {
+      bright: ['#FF4514', '#FF6A3D', '#FFDCCF', '#C4B0A6', '#FFFFFF', '#E8B04A', '#5CC48A', '#FF4514'],
+      shirts: ['#FF4514', '#895946', '#8A3C20', '#C4B0A6', '#3D2C22', '#F3EAE4', '#E8B04A', '#5CC48A'],
+      fire: ['#FF4514', '#FF6A3D', '#E8B04A', '#FFFFFF', '#C4B0A6', '#5CC48A', '#FFDCCF'],
+      hair: ['#1b1b1b', '#3b2a1a', '#6b3e1e', '#c98b3a', '#e8d49a', '#8a1c1c', '#C4B0A6'],
+      signs: ['#FF4514'], signBorder: '#C4B0A6', foam: ['#F3EAE4', '#FF4514'],
+      lights: [{ x: 0.1, ph: 0, c: '#FF4514' }, { x: 0.9, ph: 2, c: '#C4B0A6' }, { x: 0.5, ph: 4, c: '#E8B04A' }],
+      crowdBg: ['#110E0B', '#261F1A', '#8A3C20'], fireBg: ['#110E0B', '#261F1A', '#3D2C22'], starsBg: ['#3D2C22', '#1a1310', '#110E0B'],
+      warp: ['#ffffff', '#E8B04A', '#FF6A3D', '#C4B0A6', '#ffffff', '#ffffff'], bigStars: ['#E8B04A', '#ffffff', '#FF6A3D', '#C4B0A6', '#FFDCCF', '#FF4514'],
+      confettiBg: (ctx, w, h) => { const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#8A3C20'); g.addColorStop(0.45, '#3D2C22'); g.addColorStop(1, '#110E0B'); return g; },
+      rays: '#FF4514', tint: '#110E0B',
+    },
+    party: {
+      bright: ['#ff2d95', '#ffe600', '#00e5ff', '#7cff3e', '#ff7a00', '#b14cff', '#ff3b30', '#1de9b6', '#ffffff', '#ff6ec7'],
+      shirts: ['#ff2d95', '#ffe600', '#00e5ff', '#7cff3e', '#ff7a00', '#b14cff', '#ff3b30', '#1de9b6', '#ff6ec7'],
+      fire: ['#ff2d95', '#ffe600', '#00e5ff', '#7cff3e', '#ff7a00', '#b14cff', '#ff3b30', '#ffffff', '#ff6ec7'],
+      hair: ['#1b1b1b', '#3b2a1a', '#6b3e1e', '#c98b3a', '#e8d49a', '#8a1c1c', '#ff2d95', '#2d7dff', '#7cff3e', '#b14cff'],
+      signs: ['#ff2d95', '#2d7dff', '#ff7a00', '#7d2ae8', '#e0222e', '#1f9d4b', '#13b5b1'], signBorder: null, foam: ['#ffe600', '#e0222e'],
+      lights: [{ x: 0.1, ph: 0, c: '#ff2d95' }, { x: 0.9, ph: 2, c: '#00e5ff' }, { x: 0.5, ph: 4, c: '#ffe600' }],
+      crowdBg: ['#0d0624', '#2a0b4e', '#4b1272'], fireBg: ['#070a24', '#1b0b3f', '#3a0b5e'], starsBg: ['#2b1a66', '#140a33', '#05030f'],
+      warp: ['#ffffff', '#ffe600', '#00e5ff', '#ff6ec7', '#ffffff', '#ffffff'], bigStars: ['#ffe600', '#ffffff', '#00e5ff', '#ff6ec7', '#7cff3e', '#ffb340'],
+      confettiBg: (ctx, w, h, t) => { const hue = (t * 25) % 360; const g = ctx.createLinearGradient(0, 0, w, h); g.addColorStop(0, `hsl(${hue},95%,62%)`); g.addColorStop(0.5, `hsl(${(hue + 50) % 360},95%,58%)`); g.addColorStop(1, `hsl(${(hue + 110) % 360},95%,55%)`); return g; },
+      rays: '#ffffff', tint: '#1a0b3a',
+    },
+  };
+  let P = PALETTES.ember;
   const TWO_PI = Math.PI * 2;
 
   function starPath(ctx, cx, cy, rOuter, rInner, n, rot) {
@@ -37,11 +61,11 @@
       this.burst = [];
       for (let i = 0; i < 160; i++) {
         const a = rand(0, TWO_PI), sp = rand(200, 700);
-        this.burst.push({ x: w / 2, y: h / 2, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 150, w: rand(6, 12), h: rand(10, 20), c: pick(BRIGHT), ang: rand(0, TWO_PI), av: rand(-8, 8), flip: rand(0, TWO_PI), fv: rand(3, 9), life: rand(1.6, 2.8), age: 0, round: Math.random() < 0.25 });
+        this.burst.push({ x: w / 2, y: h / 2, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 150, w: rand(6, 12), h: rand(10, 20), c: pick(P.bright), ang: rand(0, TWO_PI), av: rand(-8, 8), flip: rand(0, TWO_PI), fv: rand(3, 9), life: rand(1.6, 2.8), age: 0, round: Math.random() < 0.25 });
       }
     }
     spawn(anywhere) {
-      return { x: rand(0, this.w), y: anywhere ? rand(-this.h, this.h) : rand(-60, -10), vy: rand(70, 170), sway: rand(20, 60), ph: rand(0, TWO_PI), sw: rand(1, 3), w: rand(6, 12), h: rand(10, 20), c: pick(BRIGHT), ang: rand(0, TWO_PI), av: rand(-3, 3), flip: rand(0, TWO_PI), fv: rand(2, 6), round: Math.random() < 0.25, ribbon: Math.random() < 0.15 };
+      return { x: rand(0, this.w), y: anywhere ? rand(-this.h, this.h) : rand(-60, -10), vy: rand(70, 170), sway: rand(20, 60), ph: rand(0, TWO_PI), sw: rand(1, 3), w: rand(6, 12), h: rand(10, 20), c: pick(P.bright), ang: rand(0, TWO_PI), av: rand(-3, 3), flip: rand(0, TWO_PI), fv: rand(2, 6), round: Math.random() < 0.25, ribbon: Math.random() < 0.15 };
     }
     step(dt) {
       this.t += dt;
@@ -68,12 +92,10 @@
       ctx.restore();
     }
     draw(ctx, w, h) {
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#8A3C20'); g.addColorStop(0.45, '#3D2C22'); g.addColorStop(1, '#110E0B');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      // soft ember rays
-      ctx.save(); ctx.globalAlpha = 0.14; ctx.translate(w / 2, h / 2); ctx.rotate(this.t * 0.25);
-      for (let i = 0; i < 10; i++) { ctx.rotate(TWO_PI / 10); ctx.fillStyle = '#FF4514'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 1.5, -w * 0.12); ctx.lineTo(w * 1.5, w * 0.12); ctx.closePath(); ctx.fill(); }
+      ctx.fillStyle = P.confettiBg(ctx, w, h, this.t); ctx.fillRect(0, 0, w, h);
+      // soft rays
+      ctx.save(); ctx.globalAlpha = 0.16; ctx.translate(w / 2, h / 2); ctx.rotate(this.t * 0.25);
+      for (let i = 0; i < 10; i++) { ctx.rotate(TWO_PI / 10); ctx.fillStyle = P.rays; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w * 1.5, -w * 0.12); ctx.lineTo(w * 1.5, w * 0.12); ctx.closePath(); ctx.fill(); }
       ctx.restore();
       for (const p of this.rain) this.drawPiece(ctx, p, 0.95);
       for (const p of this.burst) this.drawPiece(ctx, p, clamp(1 - (p.age / p.life - 0.7) / 0.3, 0, 1));
@@ -92,10 +114,10 @@
     }
     spawnWarp(any) {
       const a = rand(0, TWO_PI);
-      return { a, r: any ? rand(4, Math.max(this.w, this.h) * 0.7) : rand(2, 30), c: pick(['#ffffff', '#E8B04A', '#FF6A3D', '#C4B0A6', '#ffffff', '#ffffff']), sp: rand(0.9, 1.6) };
+      return { a, r: any ? rand(4, Math.max(this.w, this.h) * 0.7) : rand(2, 30), c: pick(P.warp), sp: rand(0.9, 1.6) };
     }
     spawnBig(age) {
-      return { x: rand(0.05, 0.95) * this.w, y: rand(0.05, 0.95) * this.h, age: age || 0, life: rand(2.4, 4.2), size: rand(14, 42), c: pick(['#E8B04A', '#ffffff', '#FF6A3D', '#C4B0A6', '#FFDCCF', '#FF4514']), rot: rand(0, TWO_PI), rv: rand(-0.8, 0.8), tw: rand(4, 9) };
+      return { x: rand(0.05, 0.95) * this.w, y: rand(0.05, 0.95) * this.h, age: age || 0, life: rand(2.4, 4.2), size: rand(14, 42), c: pick(P.bigStars), rot: rand(0, TWO_PI), rv: rand(-0.8, 0.8), tw: rand(4, 9) };
     }
     step(dt) {
       this.t += dt;
@@ -113,7 +135,7 @@
     }
     draw(ctx, w, h) {
       const g = ctx.createRadialGradient(this.cx, this.cy, 10, this.cx, this.cy, Math.max(w, h) * 0.8);
-      g.addColorStop(0, '#3D2C22'); g.addColorStop(0.6, '#1a1310'); g.addColorStop(1, '#110E0B');
+      g.addColorStop(0, P.starsBg[0]); g.addColorStop(0.6, P.starsBg[1]); g.addColorStop(1, P.starsBg[2]);
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       // warp streaks
       ctx.lineCap = 'round';
@@ -159,13 +181,13 @@
       this.next = 0.5;
     }
     launch(x) {
-      this.rockets.push({ x: x !== undefined ? x : rand(this.w * 0.12, this.w * 0.88), y: this.h + 10, vx: rand(-30, 30), vy: -rand(this.h * 0.95, this.h * 1.35), c: pick(FIRE), trail: [] });
+      this.rockets.push({ x: x !== undefined ? x : rand(this.w * 0.12, this.w * 0.88), y: this.h + 10, vx: rand(-30, 30), vy: -rand(this.h * 0.95, this.h * 1.35), c: pick(P.fire), trail: [] });
       if (window.Sfx) Sfx.whistleUp();
     }
     explode(r) {
       const shape = Math.random() < 0.2 ? 'heart' : Math.random() < 0.25 ? 'ring' : 'burst';
       const n = shape === 'burst' ? randInt(70, 110) : 80;
-      const c2 = pick(FIRE);
+      const c2 = pick(P.fire);
       const base = rand(120, 240);
       for (let i = 0; i < n; i++) {
         let vx, vy;
@@ -197,7 +219,7 @@
     }
     draw(ctx, w, h) {
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#110E0B'); g.addColorStop(0.6, '#261F1A'); g.addColorStop(1, '#3D2C22');
+      g.addColorStop(0, P.fireBg[0]); g.addColorStop(0.6, P.fireBg[1]); g.addColorStop(1, P.fireBg[2]);
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = '#fff';
       for (const s of this.bgStars) { ctx.globalAlpha = 0.4 + 0.4 * Math.sin(this.t * 2 + s.ph); ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TWO_PI); ctx.fill(); }
@@ -243,9 +265,9 @@
           const ch = d.signs ? this.phrase[i] : null;
           people.push({
             x: i * sp + (d.signs ? sp / 2 : rand(0, sp * 0.5)),
-            shirt: pick(SHIRTS), skin: pick(SKINS), hair: pick(HAIR), cap: Math.random() < 0.35, capColor: pick(SHIRTS),
+            shirt: pick(P.shirts), skin: pick(SKINS), hair: pick(P.hair), cap: Math.random() < 0.35, capColor: pick(P.shirts),
             ph: rand(0, TWO_PI), ph2: rand(0, TWO_PI), wf: rand(5, 9), bf: rand(3, 6),
-            sign: ch && ch !== ' ' ? { ch, color: '#FF4514', tilt: rand(-0.12, 0.12) } : null,
+            sign: ch && ch !== ' ' ? { ch, color: pick(P.signs), tilt: rand(-0.12, 0.12) } : null,
             foam: !ch && Math.random() < 0.15,
           });
         }
@@ -254,8 +276,8 @@
       this.camSpeed = 95;
       this.flashes = [];
       this.confetti = [];
-      for (let i = 0; i < 70; i++) this.confetti.push({ x: rand(0, w), y: rand(-h, h), vy: rand(60, 140), c: pick(BRIGHT), ang: rand(0, TWO_PI), av: rand(-4, 4), s: rand(5, 10) });
-      this.lights = [{ x: 0.1, ph: 0, c: '#FF4514' }, { x: 0.9, ph: 2, c: '#C4B0A6' }, { x: 0.5, ph: 4, c: '#E8B04A' }];
+      for (let i = 0; i < 70; i++) this.confetti.push({ x: rand(0, w), y: rand(-h, h), vy: rand(60, 140), c: pick(P.bright), ang: rand(0, TWO_PI), av: rand(-4, 4), s: rand(5, 10) });
+      this.lights = P.lights;
       this.nextFlash = 0;
     }
     step(dt) {
@@ -268,8 +290,8 @@
     drawPerson(ctx, p, x, baseY, s, tint, t, withSign) {
       const bounce = Math.abs(Math.sin(t * p.bf + p.ph)) * 14 * s;
       const y = baseY - bounce;
-      const shirt = tint < 1 ? U.mix(p.shirt, '#110E0B', 1 - tint) : p.shirt;
-      const skin = tint < 1 ? U.mix(p.skin, '#110E0B', 1 - tint) : p.skin;
+      const shirt = tint < 1 ? U.mix(p.shirt, P.tint, 1 - tint) : p.shirt;
+      const skin = tint < 1 ? U.mix(p.skin, P.tint, 1 - tint) : p.skin;
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(s, s);
@@ -284,7 +306,7 @@
       ctx.fillStyle = skin;
       ctx.beginPath(); ctx.arc(lx, ly, 7, 0, TWO_PI); ctx.fill();
       ctx.beginPath(); ctx.arc(rx, ry, 7, 0, TWO_PI); ctx.fill();
-      if (p.foam) { ctx.fillStyle = '#F3EAE4'; ctx.beginPath(); ctx.roundRect(lx - 12, ly - 34, 24, 34, 6); ctx.fill(); ctx.fillStyle = '#FF4514'; ctx.font = '800 18px "Jost", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('#1', lx, ly - 10); }
+      if (p.foam) { ctx.fillStyle = P.foam[0]; ctx.beginPath(); ctx.roundRect(lx - 12, ly - 34, 24, 34, 6); ctx.fill(); ctx.fillStyle = P.foam[1]; ctx.font = '800 18px "Jost", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('#1', lx, ly - 10); }
       // body
       ctx.fillStyle = shirt;
       ctx.beginPath(); ctx.roundRect(-24, -62, 48, 64, 12); ctx.fill();
@@ -305,7 +327,7 @@
         ctx.translate(rx, ry);
         ctx.rotate(p.sign.tilt + Math.sin(t * 3 + p.ph) * 0.08);
         ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -40); ctx.stroke();
-        ctx.fillStyle = '#F3EAE4'; ctx.strokeStyle = '#C4B0A6'; ctx.lineWidth = 4;
+        ctx.fillStyle = P.signBorder ? '#F3EAE4' : '#fffdf2'; ctx.strokeStyle = P.signBorder || p.sign.color; ctx.lineWidth = P.signBorder ? 4 : 5;
         ctx.beginPath(); ctx.roundRect(-34, -108, 68, 68, 8); ctx.fill(); ctx.stroke();
         ctx.fillStyle = p.sign.color; ctx.font = '800 50px "Jost", "Futura", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(p.sign.ch, 0, -72);
@@ -316,7 +338,7 @@
     draw(ctx, w, h) {
       const t = this.t;
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#110E0B'); g.addColorStop(0.55, '#261F1A'); g.addColorStop(1, '#8A3C20');
+      g.addColorStop(0, P.crowdBg[0]); g.addColorStop(0.55, P.crowdBg[1]); g.addColorStop(1, P.crowdBg[2]);
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       // sweeping spotlights
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -365,8 +387,9 @@
 
   const Celebrate = {
     MODES: Object.keys(MODES),
-    start(cv, mode) {
+    start(cv, mode, skin) {
       Celebrate.stop();
+      P = PALETTES[skin] || PALETTES.ember;
       canvas = cv; ctx = cv.getContext('2d');
       if (!ctx.roundRect) ctx.roundRect = function (x, y, w, h, r) { this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); };
       const [w, h] = fit();
