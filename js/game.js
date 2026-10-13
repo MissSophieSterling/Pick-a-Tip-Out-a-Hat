@@ -151,14 +151,15 @@
   function updateHomeText() {
     const s = S.get();
     const min = formatMoney(Math.min(...s.amounts)), max = formatMoney(Math.max(...s.amounts));
-    $('#hat-text').textContent = `${s.amounts.length} amounts, ${min} to ${max}. Which one comes up leans on what the order cost.`;
     const extras = [];
-    if (s.wild) extras.push(`${plural(s.wild, 'wild card')} where you name the tip`);
-    if (s.chooseAgain) extras.push(`${plural(s.chooseAgain, 'blank slip')} that send you back in`);
-    if (s.bonus) extras.push(`${plural(s.bonus, 'bonus slip')} worth 1 to ${s.bonus} extra draws`);
-    let odds = 'Type in what the food cost, then draw. About 4 draws in 5 land between 10% and 20% of it; the rest are long shots, and the big ones over 20% are rare. It can still come up low. That is the game, not your performance.';
-    if (extras.length) odds += ` Also in the hat: ${extras.join(', ')}.`;
-    if (s.bonus) odds += ' Keep any amount you like or draw again; the last draw is final, even if it is smaller.';
+    if (s.wild) extras.push(`${plural(s.wild, 'wild card')} (you name the tip)`);
+    if (s.chooseAgain) extras.push(`${plural(s.chooseAgain, 'blank slip')} (back into the hat)`);
+    if (s.bonus) extras.push(`${plural(s.bonus, 'bonus slip')} (${s.bonus === 1 ? '1 extra draw' : `1 to ${s.bonus} extra draws`})`);
+    const list = extras.length > 1 ? extras.slice(0, -1).join(', ') + ' and ' + extras[extras.length - 1] : extras[0];
+    $('#hat-text').textContent = `In the hat: ${s.amounts.length} amounts, ${min} to ${max}${extras.length ? ', plus ' + list : ''}.`;
+    let odds = 'Type in what the food cost, then draw. About 4 draws in 5 land between 10% and 20% of it. The rest are long shots, and the big ones are rare.';
+    if (s.bonus) odds += ' After a bonus slip, keep what you like or draw again; the last draw is final.';
+    odds += " It can come up low. That's the game, not your performance.";
     $('#odds-text').textContent = odds;
   }
 
@@ -564,9 +565,21 @@
     for (let k = teeth; k > 0; k--) pts.push(`${((k - 0.5) / teeth * 100).toFixed(3)}% 100%`, `${((k - 1) / teeth * 100).toFixed(3)}% calc(100% - 8px)`);
     $('#order-form').style.clipPath = `polygon(${pts.join(', ')})`;
   }
+  const orderNext = $('#order-next'), orderGo = $('#btn-order-go');
+  /** The down arrow shows once there is an amount and the Continue button is out of view (a phone keyboard usually hides it). */
+  function updateOrderNext() {
+    if (order.hidden) { orderNext.hidden = true; return; }
+    const vv = window.visualViewport;
+    const top = vv ? vv.offsetTop : 0, bottom = top + (vv ? vv.height : window.innerHeight);
+    const r = orderGo.getBoundingClientRect();
+    const show = orderInput.value.trim() !== '' && !(r.top >= top && r.bottom <= bottom);
+    if (show) { orderNext.style.top = Math.round(bottom - 76) + 'px'; orderNext.style.bottom = 'auto'; }
+    orderNext.hidden = !show;
+  }
   function openOrder() {
     // the stage waits behind the receipt, blurred
     runId++;
+    orderNext.hidden = true;
     showScreen('stage'); resetStage(); stageHat.clearSlips();
     $('#receipt-no').textContent = `Order #${randInt(1000, 9999)}`;
     const items = shuffle(RECEIPT_ITEMS.slice()).slice(0, 4);
@@ -575,7 +588,7 @@
     order.hidden = false; order.classList.add('open');
     setTimeout(() => orderInput.focus(), 60);
   }
-  function closeOrder() { order.hidden = true; order.classList.remove('open'); }
+  function closeOrder() { order.hidden = true; order.classList.remove('open'); orderNext.hidden = true; }
   function submitOrder() {
     const parsed = TipMath.parseOrderTotal(orderInput.value);
     if (parsed.error) { orderError.textContent = parsed.error; orderInput.focus(); Sfx.boing(); return false; }
@@ -751,7 +764,24 @@
     $('#btn-home').addEventListener('click', () => { Sfx.tap(); abort(); });
     $('#btn-replay').addEventListener('click', () => { Sfx.pop(); abort(); });
     $('#order-form').addEventListener('submit', (e) => { e.preventDefault(); Sfx.unlock(); submitOrder(); });
-    orderInput.addEventListener('input', () => { orderError.textContent = ''; });
+    orderInput.addEventListener('input', () => { orderError.textContent = ''; updateOrderNext(); });
+    orderNext.addEventListener('click', () => {
+      Sfx.tap(); orderInput.blur();
+      orderGo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try { orderGo.focus({ preventScroll: true }); } catch (e) { /* fine */ }
+      setTimeout(updateOrderNext, 500);
+    });
+    order.addEventListener('scroll', updateOrderNext, { passive: true });
+    window.addEventListener('resize', updateOrderNext);
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', updateOrderNext); window.visualViewport.addEventListener('scroll', updateOrderNext); }
+    $('#btn-more').addEventListener('click', () => {
+      const btn = $('#btn-more'), more = $('#home-more');
+      const open = more.hidden;
+      more.hidden = !open; more.classList.toggle('in', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      $('#more-label').textContent = open ? 'Less' : 'More';
+      Sfx.tap();
+    });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !order.hidden) abort(); });
     receiptEdge();
     $('#btn-again').addEventListener('click', (e) => { e.preventDefault(); Sfx.pop(); hideResult(); runRound({ fresh: false }); });

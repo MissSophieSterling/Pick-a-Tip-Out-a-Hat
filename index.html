@@ -67,11 +67,14 @@
             <button id="btn-draw-tip" class="ee-btn ee-btn--primary ee-btn--lg" type="button"><span class="emoji party-only">🎩</span><span>Draw a tip</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
             <div class="burst" id="draw-burst" aria-hidden="true"></div>
           </div>
-          <p class="t-small muted draw-note">A slip is picked out of the hat. The number on it is your tip in dollars.</p>
+          <p class="t-small muted draw-note">Pull a slip from the hat. The number on it is your tip.</p>
         </div>
-        <p class="t-heading intro">Thank you for your service. As a sign of appreciation, here's a little game.</p>
-        <p class="t-body" id="hat-text"></p>
-        <p class="t-small muted" id="odds-text"></p>
+        <p class="t-heading intro">Thanks for the delivery. Here's a little game.</p>
+        <button id="btn-more" class="more-btn" type="button" aria-expanded="false" aria-controls="home-more"><span id="more-label">More</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <div id="home-more" class="home-more" hidden>
+          <p class="t-body" id="hat-text"></p>
+          <p class="t-small muted" id="odds-text"></p>
+        </div>
       </div>
     </section>
 
@@ -140,6 +143,7 @@
         </form>
       </div>
     </div>
+    <button id="order-next" class="order-next" type="button" aria-label="Down to the Continue button" hidden><svg class="icon"><use href="#i-chevron"/></svg></button>
   </div>
 
   <div id="result" class="result" hidden>
