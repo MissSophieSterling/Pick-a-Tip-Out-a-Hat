@@ -4,7 +4,10 @@
 
   const KEY = 'tiphat.settings.v1';
 
-  const DEFAULT_AMOUNTS = [1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 45, 50, 55, 60, 67, 70, 80, 90, 100];
+  // Every dollar up to $35, then 40, 45, 50 and tens to 100. The weighted draw (js/tipmath.js) decides which comes up.
+  const DEFAULT_AMOUNTS = TipMath.AMOUNTS.slice();
+  // The list the app shipped with before the order total mattered; saved settings still holding it move to the new list.
+  const OLD_DEFAULT_AMOUNTS = [1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 45, 50, 55, 60, 67, 70, 80, 90, 100];
 
   const SKIN_TONES = [
     { id: 'porcelain', hex: '#FADCBC' },
@@ -48,7 +51,7 @@
     amounts: DEFAULT_AMOUNTS.slice(),
     chooseAgain: 5,
     wild: 1,
-    bonus: 5,               // bonus slips worth 1..bonus extra draws
+    bonus: 3,               // bonus slips worth 1..bonus extra draws (3 at most)
     background: 'random',
     sound: true,
     skin: 'ember',          // 'ember' (the design system) or 'party' (the first look, unlocked by the Easter egg)
@@ -63,9 +66,12 @@
     try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { saved = null; }
     const s = Object.assign({}, DEFAULTS, saved || {});
     s.amounts = sanitizeAmounts(Array.isArray(s.amounts) ? s.amounts : DEFAULT_AMOUNTS);
+    if (s.amounts.length === OLD_DEFAULT_AMOUNTS.length && s.amounts.every((v, i) => v === OLD_DEFAULT_AMOUNTS[i])) s.amounts = DEFAULT_AMOUNTS.slice();
+    // an older build left the hat holding only 7 and 11 after the Easter egg; the egg now puts the amounts back itself
+    if (s.eggFound && s.amounts.length === 2 && s.amounts[0] === 7 && s.amounts[1] === 11) s.amounts = DEFAULT_AMOUNTS.slice();
     s.chooseAgain = U.clamp(parseInt(s.chooseAgain, 10) || 0, 0, 50);
     s.wild = U.clamp(parseInt(s.wild, 10) || 0, 0, 50);
-    s.bonus = U.clamp(parseInt(s.bonus, 10) || 0, 0, 5);
+    s.bonus = U.clamp(parseInt(s.bonus, 10) || 0, 0, 3);
     if (saved && saved.bonus === undefined) s.bonus = DEFAULTS.bonus;
     if (!HAT_COLORS.some((h) => h.id === s.hatColor)) s.hatColor = 'red';
     if (!SKIN_TONES.some((t) => t.id === s.skinTone)) s.skinTone = 'tan';

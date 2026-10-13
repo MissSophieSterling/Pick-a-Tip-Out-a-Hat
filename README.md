@@ -12,15 +12,37 @@ It is a web app that installs to a phone's home screen (a PWA), so there is noth
 
 ### How a round goes
 
-Tap **Draw a tip**. The hand writes the amounts on slips, tosses them in the cap, shakes it for a random stretch, reaches in and pulls one out. The slip is held for a random, anxious moment while the clock ticks, then it is revealed.
+Tap **Draw a tip**. A receipt slides up first: type what the food cost (before tax, fees and delivery) into the subtotal line and hit Continue. The hand then writes the amounts on slips, tosses them in the cap, shakes it for a random stretch, reaches in and pulls one out. The slip is held for a random, anxious moment while the clock ticks, then it is revealed. The win screen says what share of the order the tip is.
 
 On a win the screen signs off with a layered **THANK YOU FOR YOUR SERVICE!** that squeezes and stretches, holds still while firecrackers shoot up from behind the tip, and goes again a few times. The button under it starts another delivery.
 
-Besides the dollar slips the hat holds a **Wild Card** (the Dasher names the tip), **blank slips** that send the hand back in, and **bonus slips** worth 1 to 5 extra draws. After a bonus slip the Dasher can keep any amount that comes up or draw again; the last draw is final, even if it is smaller.
+Besides the dollar slips the hat holds a **Wild Card** (the Dasher names the tip), **blank slips** that send the hand back in, and **bonus slips** worth 1 to 3 extra draws. After a bonus slip the Dasher can keep any amount that comes up or draw again; the last draw is final, even if it is smaller.
 
 ### Default amounts
 
-$1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 45, 50, 55, 60, 67, 70, 80, 90, 100, plus 1 wild card, 5 blank slips and 5 bonus slips. All of this is editable.
+Every dollar from $1 to $35, then 40, 45, 50, 60, 70, 80, 90 and 100 (43 amounts), plus 1 wild card, 5 blank slips and 3 bonus slips. All of this is editable.
+
+### How the order total weights the hat
+
+The maths lives in `js/tipmath.js`, on its own, with no interface, animation or audio in it. The order total T is turned into integer cents C and every comparison is done in cents, so there is no floating-point drift at the boundaries.
+
+Each eligible amount A (tipCents = A × 100) falls into exactly one group:
+
+- **Preferred** (80% between them, equal shares): 10% to 20% of the order, both ends included. In cents: `tipCents × 10 >= C` and `tipCents × 5 <= C`.
+- **High outlier** (1% between them): `A >= 40` and A is more than 20% of the order (`tipCents × 5 > C`). Inside the group each amount is weighted `1 / A²`, so $40 is 6.25 times as likely as $100.
+- **Ordinary** (19% between them, equal shares): everything else. Ordinary amounts do not get rarer the further they sit from the preferred range.
+
+Which group an amount lands in depends on the order: $100 is an outlier on a $50 order and preferred on a $600 one.
+
+When a group is empty its share moves on, in this order: no preferred amounts, the 80% goes to ordinary; no outliers, the 1% goes to ordinary; no ordinary amounts, their share goes to preferred if there are any, otherwise to the outliers. The probabilities are then normalised to sum to 1. Every eligible amount keeps a positive chance for every order total.
+
+Worked example, a $50 order: $5 to $10 are preferred (six amounts, about 13.33% each); 29 ordinary amounts share 19% (about 0.655% each); $40 to $100 are the eight outliers sharing 1%.
+
+The draw itself: one uniform random number U from `crypto.getRandomValues`, walked through preferred, ordinary and outlier amounts in that order (ascending within each), picking the first whose cumulative probability exceeds U. `TipMath.select` takes an injected random source for deterministic tests. The result is chosen once, before the animation starts; nothing in the animation, hand, sound or reveal can change it.
+
+The wild card, blank and bonus slips sit in the hat beside the money slips: each takes one slot, so the chance of pulling a special slip is `specials / (amounts + specials)`, and a special slip leaves the hat once drawn.
+
+Run the tests with `npm test` (Node 18 or newer, no dependencies). They cover the inclusive boundaries, invalid input, empty preferred and outlier groups, normalisation, the ordering, deterministic selection and the $50 example.
 
 ## Settings (hamburger, top right)
 
@@ -49,7 +71,7 @@ Then open `http://localhost:8080/`. Add `?fast=1` to the URL to speed every anim
 
 ## Two looks
 
-The app ships with two looks. The default follows the Ember & Espresso design system below. The first design, bright and glossy with emoji and neon celebrations, is kept as the "party" look and is hidden behind an Easter egg: in Settings, set the tip amounts to only 7 and 11. Balloons float up, a crowd of kids cheers, and the party look appears. From then on a "Look" switch in Settings flips between the two; the amounts stay as you set them, so reset them afterwards.
+The app ships with two looks. The default follows the Ember & Espresso design system below. The first design, bright and glossy with emoji and neon celebrations, is kept as the "party" look and is hidden behind an Easter egg: in Settings, set the tip amounts to only 7 and 11. Balloons float up, a crowd of kids cheers, and the party look appears. From then on a "Look" switch in Settings flips between the two, and the theme switch still does light and dark. Once the party look is in, the amounts go back to the full list, so the hat is not left holding just those two.
 
 ## Design
 

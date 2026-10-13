@@ -105,6 +105,12 @@ html[data-skin="party"] .vignette.tense { animation: heartbeatParty 1s ease-in-o
 @keyframes heartbeatParty { 0%, 100% { box-shadow: inset 0 0 90px 40px rgba(120, 0, 60, 0.55); } 50% { box-shadow: inset 0 0 120px 70px rgba(200, 0, 90, 0.7); } }
 html[data-skin="party"] #btn-abort { color: var(--text-soft); font: 600 15px/20px var(--font-sans); text-transform: none; letter-spacing: 0; }
 
+/* ---------- order receipt ---------- */
+html[data-skin="party"] .order { background: rgba(26, 11, 46, 0.62); }
+html[data-skin="party"] .receipt { --paper: #ffffff; --paper-ink: #2b1d3a; --paper-muted: rgba(43, 29, 58, 0.55); --paper-ember: #d4147a; }
+html[data-skin="party"] .receipt-rule { border-top-color: rgba(43, 29, 58, 0.35); }
+html[data-skin="party"] .receipt .ee-btn { font-family: var(--font-sans); }
+
 /* ---------- result ---------- */
 html[data-skin="party"] .result { background: #1a0b2e; }
 html[data-skin="party"] .result.again { background: repeating-linear-gradient(135deg, #ff7a00 0 40px, #ffb340 40px 80px); animation: stripes 1.2s linear infinite; }

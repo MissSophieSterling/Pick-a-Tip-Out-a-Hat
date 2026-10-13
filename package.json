@@ -1,0 +1,9 @@
+{
+  "name": "tip-hat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pick a tip out of a hat: a small game for tipping the delivery driver.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

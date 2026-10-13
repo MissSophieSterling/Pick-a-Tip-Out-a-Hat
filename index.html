@@ -111,6 +111,37 @@
   </main>
 
   <!-- RESULT OVERLAY -->
+  <!-- THE ORDER: the receipt that comes before the first draw -->
+  <div id="order" class="order" hidden>
+    <div class="order-inner">
+      <div class="order-head">
+        <div class="t-display order-first">First...</div>
+        <p class="t-title">How much was the order?</p>
+      </div>
+      <div class="receipt-wrap">
+        <form class="receipt" id="order-form" novalidate>
+          <div class="receipt-head"><strong>Tip Hat</strong><span id="receipt-no">Order #4821</span></div>
+          <div class="receipt-blur" id="receipt-items" aria-hidden="true"></div>
+          <hr class="receipt-rule">
+          <label class="receipt-sub" for="order-input">
+            <span>Subtotal</span>
+            <span class="order-field"><span>$</span><input id="order-input" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off" enterkeyhint="go" aria-describedby="order-note"></span>
+          </label>
+          <p class="receipt-error" id="order-error" role="alert"></p>
+          <div class="receipt-blur" aria-hidden="true">
+            <div class="receipt-row"><span>Tax</span><span>3.12</span></div>
+            <div class="receipt-row"><span>Service fee</span><span>2.00</span></div>
+            <div class="receipt-row"><span>Delivery</span><span>3.99</span></div>
+          </div>
+          <div class="receipt-row receipt-tip"><span>Tip</span><span>?</span></div>
+          <hr class="receipt-rule">
+          <p class="receipt-note t-small" id="order-note">Food and drink only: before tax, fees and delivery.</p>
+          <button id="btn-order-go" class="ee-btn ee-btn--primary ee-btn--block ee-btn--lg" type="submit"><span class="emoji party-only">🧾</span><span>Continue</span><svg class="icon ember-only"><use href="#i-arrow"/></svg></button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div id="result" class="result" hidden>
     <canvas id="celebration"></canvas>
     <div class="flash" id="flash"></div>
@@ -202,7 +233,7 @@
 
       <section class="set">
         <h3 class="t-label">Tip amounts</h3>
-        <p class="t-small muted">Tap an amount to remove it. These go in the hat.</p>
+        <p class="t-small muted">Tap an amount to remove it. These go in the hat; which one comes up leans on the order total.</p>
         <div class="chips" id="amount-chips"></div>
         <div class="ee-field" id="amount-field">
           <label for="amount-input">Add an amount</label>
@@ -221,8 +252,8 @@
           <input id="set-wild" class="ee-input num t-mono" type="number" inputmode="numeric" min="0" max="50">
         </div>
         <div class="row">
-          <label for="set-bonus" class="t-body">Bonus draw slips (1 to 5 extra draws)</label>
-          <input id="set-bonus" class="ee-input num t-mono" type="number" inputmode="numeric" min="0" max="5">
+          <label for="set-bonus" class="t-body">Bonus draw slips (1 to 3 extra draws)</label>
+          <input id="set-bonus" class="ee-input num t-mono" type="number" inputmode="numeric" min="0" max="3">
         </div>
         <button id="btn-reset-amounts" class="ee-btn ee-btn--outline" type="button">Reset to defaults</button>
       </section>
@@ -253,6 +284,7 @@
   </aside>
 
   <script src="js/util.js"></script>
+  <script src="js/tipmath.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/hand.js"></script>
   <script src="js/hat.js"></script>
