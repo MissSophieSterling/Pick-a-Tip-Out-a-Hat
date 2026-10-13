@@ -53,6 +53,7 @@
     sound: true,
     skin: 'ember',          // 'ember' (the design system) or 'party' (the first look, unlocked by the Easter egg)
     eggFound: false,
+    hand: {},               // accessory choices; anything missing or 'random' is left to chance
   };
 
   let state = load();
@@ -71,6 +72,7 @@
     if (s.background !== 'random' && !BACKGROUNDS.includes(s.background)) s.background = 'random';
     if (s.theme !== 'light' && s.theme !== 'dark') s.theme = null;
     if (s.skin !== 'party') s.skin = 'ember';
+    s.hand = (s.hand && typeof s.hand === 'object') ? Object.assign({}, s.hand) : {};
     s.eggFound = !!s.eggFound;
     return s;
   }
@@ -103,6 +105,7 @@
     DEFAULT_AMOUNTS, SKIN_TONES, HAT_COLORS, BACKGROUNDS,
     get: () => state,
     set(patch) { Object.assign(state, patch); save(); },
+    setHandPref(key, value) { state.hand = Object.assign({}, state.hand, { [key]: value }); save(); },
     setAmounts(list) { state.amounts = sanitizeAmounts(list); save(); },
     resetAmounts() { state.amounts = DEFAULT_AMOUNTS.slice(); state.chooseAgain = DEFAULTS.chooseAgain; state.wild = DEFAULTS.wild; state.bonus = DEFAULTS.bonus; save(); },
     effectiveTheme, applyTheme,

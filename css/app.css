@@ -147,6 +147,8 @@ a { color: var(--ember-text); }
 .hand-mini.spin { animation: spinIn .35s ease-out; }
 @keyframes spinIn { from { opacity: 0.3; } to { opacity: 1; } }
 
+.pref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-2); }
+.pref-grid .ee-field label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .select-wrap { position: relative; }
 .select-wrap select { width: 100%; appearance: none; -webkit-appearance: none; padding-right: 40px; }
 .select-wrap .icon { position: absolute; right: var(--space-3); top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--ink-muted); }

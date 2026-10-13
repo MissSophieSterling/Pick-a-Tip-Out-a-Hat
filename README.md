@@ -23,7 +23,7 @@ $1, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 23, 25, 28, 30, 35, 40, 4
 ## Settings (hamburger, top right)
 
 - **Theme**: light or dark. Follows the phone until you pick one.
-- **The hand**: skin tone is random every session unless you switch on "Set skin tone" and pick one. Rings, stacked rings, watch, bracelets, nail polish, freckles and tattoos are rolled at random; "New random hand" rolls again.
+- **The hand**: skin tone is random every session unless you switch on "Set skin tone" and pick one. Under "Accessories" you choose the rings (how many, and the metal), the watch, the bracelets (how many, and the style), the tattoo and where it sits, the nail colour, knuckle letters and freckles. Everything starts on "Random"; "New random hand" rolls again whatever is still on Random and keeps the rest.
 - **The hat**: the cap color (red by default; ember and the rest of the palette are in the dropdown).
 - **Tip amounts**: tap a chip to remove it, type to add one, set how many blank, Wild Card and bonus slips go in, or reset to the defaults.
 - **Celebration**: the winner background. Random by default, or pick one: the crowd going wild (a scrolling panorama where each fan holds a letter of "WE GOT A WINNER!"), confetti, stars expanding into view, or fireworks.
